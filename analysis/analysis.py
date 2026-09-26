@@ -1,20 +1,24 @@
-import glob
+from pathlib import Path
+
 import pandas as pd
 
-def generate_csv_analysis(output_file="./analysis.md"):
-    # Find all CSV files in the current directory
-    csv_files = glob.glob("*.csv")
+REPO_ROOT = Path(__file__).resolve().parent.parent
+CSV_DIR = REPO_ROOT / "Northwind_Challenge_Data"
+
+def generate_csv_analysis(output_file=REPO_ROOT / "analysis" / "analysis_output.md"):
+    # Find all CSV files in the data directory
+    csv_files = sorted(CSV_DIR.glob("*.csv"))
     
     with open(output_file, "w", encoding="utf-8") as f:
         f.write("# CSV Frequency Analysis\n\n")
         
         if not csv_files:
-            f.write("No `.csv` files were found in the current directory.\n")
+            f.write("No `.csv` files were found in `Northwind_Challenge_Data/`.\n")
             print("No CSV files found.")
             return
             
         for file in csv_files:
-            f.write(f"## File: `{file}`\n\n")
+            f.write(f"## File: `{file.name}`\n\n")
             
             try:
                 # Read the CSV

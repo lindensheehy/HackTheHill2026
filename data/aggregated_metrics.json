@@ -1,0 +1,1355 @@
+{
+  "key_takeaways": [
+    "**Worst SLA cell:** Billing - estimated read at P1 breaches 83.6% of the time.",
+    "**Transfer penalty:** transferred tickets take 38.2 days on average vs 23.0 (1.67x), with a breach rate of 87.7% vs 69.0%.",
+    "**SLA reality gap:** the 10-day SLA cohort averages 17.2 days (1.72x target).",
+    "**Regional bottleneck:** Dunmoor has the highest breach rate (76.1%, mean 28.3 days).",
+    "**Financial liability:** 1,345,189.54 in bill corrections; Billing - disputed amount accounts for 72.2% (970,557.26).",
+    "**Repeat accounts:** 291 of 23,523 accounts have more than one closed complaint; 25 have more than one financial complaint.",
+    "**Information-only risk:** complaints resolvable by information alone reopen at 16.2% vs 15.7% for the rest.",
+    "**Least durable fix:** \"Refund or credit applied\" reopens 17.5% of the time.",
+    "**Channel:** Social has the highest information-only resolvable rate (25.6%).",
+    "**SLA trend:** the 3-month rolling breach rate moved from 48.3% (2024-12) to 91.4% (2026-09), peaking at 92.8% in 2026-07.",
+    "**Sharpest spike:** Other peaked at 43 in 2026-06 (1.54x its monthly mean); busiest calendar months: May, Sep, Jun.",
+    "**Highest-friction system:** SYS-01 (46.2% transferred, mean 30.2 days to close)."
+  ],
+  "Data Preparation & Long-Tail": {
+    "Dataset Overview": [
+      {
+        "metric": "Total complaints",
+        "value": 25416
+      },
+      {
+        "metric": "Open (excluded from resolution/SLA/financial metrics)",
+        "value": 1599
+      },
+      {
+        "metric": "Closed (incl. reopened)",
+        "value": 23817
+      },
+      {
+        "metric": "Date range (opened)",
+        "value": "2024-10-01 to 2026-09-30"
+      },
+      {
+        "metric": "Distinct accounts",
+        "value": 25074
+      },
+      {
+        "metric": "Long-tail threshold (p99 days_to_close)",
+        "value": 84.84
+      },
+      {
+        "metric": "Long-tail complaints",
+        "value": 239
+      }
+    ],
+    "Long-Tail Profile": [
+      {
+        "index": "priority: P3",
+        "long_tail_%": 100.0,
+        "all_closed_%": 69.3664189445,
+        "over_representation_pp": 30.6335810555
+      },
+      {
+        "index": "category: Billing - disputed amount",
+        "long_tail_%": 53.9748953975,
+        "all_closed_%": 31.422933199,
+        "over_representation_pp": 22.5519621985
+      },
+      {
+        "index": "category: Billing - estimated read",
+        "long_tail_%": 36.4016736402,
+        "all_closed_%": 18.8310870387,
+        "over_representation_pp": 17.5705866015
+      },
+      {
+        "index": "source_system: SYS-05",
+        "long_tail_%": 41.0041841004,
+        "all_closed_%": 24.9443674686,
+        "over_representation_pp": 16.0598166318
+      },
+      {
+        "index": "source_system: SYS-01",
+        "long_tail_%": 33.0543933054,
+        "all_closed_%": 25.4608053071,
+        "over_representation_pp": 7.5935879983
+      },
+      {
+        "index": "source_system: SYS-03",
+        "long_tail_%": 25.9414225941,
+        "all_closed_%": 24.646261074,
+        "over_representation_pp": 1.2951615201
+      },
+      {
+        "index": "category: Other",
+        "long_tail_%": 0.4184100418,
+        "all_closed_%": 2.6367720536,
+        "over_representation_pp": -2.2183620117
+      },
+      {
+        "index": "category: Water - pressure or quality",
+        "long_tail_%": 0.8368200837,
+        "all_closed_%": 5.2609480623,
+        "over_representation_pp": -4.4241279786
+      },
+      {
+        "index": "category: Supply - interruption",
+        "long_tail_%": 3.3472803347,
+        "all_closed_%": 8.6786748961,
+        "over_representation_pp": -5.3313945614
+      },
+      {
+        "index": "category: Payment - plan or arrears",
+        "long_tail_%": 0.8368200837,
+        "all_closed_%": 6.3861947349,
+        "over_representation_pp": -5.5493746512
+      },
+      {
+        "index": "category: Service - missed appointment",
+        "long_tail_%": 1.2552301255,
+        "all_closed_%": 6.8438510308,
+        "over_representation_pp": -5.5886209053
+      },
+      {
+        "index": "priority: P1",
+        "long_tail_%": 0.0,
+        "all_closed_%": 6.2896250577,
+        "over_representation_pp": -6.2896250577
+      }
+    ],
+    "Long-Tail vs. All Closed": [
+      {
+        "subset": "Long-tail",
+        "transferred_%": 100.0,
+        "reopened_%": 28.870292887,
+        "mean_days_to_close": 93.6652719665
+      },
+      {
+        "subset": "All closed",
+        "transferred_%": 34.2150564723,
+        "reopened_%": 15.8542217744,
+        "mean_days_to_close": 28.1937691565
+      }
+    ]
+  },
+  "A. SLA Performance & Bottlenecks": {
+    "Breach Rate (%) by Category & Priority": [
+      {
+        "category": "Billing - estimated read",
+        "P1": 83.6236933798,
+        "P2": 79.4358507734,
+        "P3": 82.1232655695,
+        "All": 81.5607580825
+      },
+      {
+        "category": "Billing - disputed amount",
+        "P1": 73.5483870968,
+        "P2": 78.239475123,
+        "P3": 80.4624277457,
+        "All": 79.4895777659
+      },
+      {
+        "category": "All",
+        "P1": 71.4953271028,
+        "P2": 75.1121076233,
+        "P3": 75.8126021427,
+        "All": 75.3705336524
+      },
+      {
+        "category": "Service - poor communication",
+        "P1": 64.8148148148,
+        "P2": 69.7516930023,
+        "P3": 72.8582866293,
+        "All": 71.6111111111
+      },
+      {
+        "category": "Water - pressure or quality",
+        "P1": 68.2352941176,
+        "P2": 75.1773049645,
+        "P3": 70.2031602709,
+        "All": 71.1891460495
+      },
+      {
+        "category": "Payment - plan or arrears",
+        "P1": 56.976744186,
+        "P2": 71.2609970674,
+        "P3": 71.5722120658,
+        "All": 70.6771860618
+      },
+      {
+        "category": "Other",
+        "P1": 64.2857142857,
+        "P2": 76.2589928058,
+        "P3": 68.903803132,
+        "All": 70.2229299363
+      },
+      {
+        "category": "Supply - interruption",
+        "P1": 70.9923664122,
+        "P2": 71.8929254302,
+        "P3": 69.2144373673,
+        "All": 70.0048379294
+      },
+      {
+        "category": "Service - missed appointment",
+        "P1": 69.2307692308,
+        "P2": 69.6202531646,
+        "P3": 70.1048951049,
+        "All": 69.9386503067
+      },
+      {
+        "category": "Metering - no read taken",
+        "P1": 63.5467980296,
+        "P2": 70.9504685408,
+        "P3": 70.0850425213,
+        "All": 69.8541878603
+      }
+    ],
+    "System Transfer Penalty": [
+      {
+        "transferred_between_systems": "Not transferred",
+        "complaints": 15668,
+        "mean_days": 22.966236916,
+        "median_days": 21.0,
+        "breach_rate_pct": 68.9622159816,
+        "reopen_rate_pct": 8.8971151391
+      },
+      {
+        "transferred_between_systems": "Transferred",
+        "complaints": 8149,
+        "mean_days": 38.2446926003,
+        "median_days": 36.0,
+        "breach_rate_pct": 87.691741318,
+        "reopen_rate_pct": 29.2305804393
+      }
+    ],
+    "SLA Target vs. Reality": [
+      {
+        "sla_days": 5,
+        "complaints": 1498,
+        "mean_days": 8.4599465955,
+        "median_days": 8.0,
+        "p90_days": 15.0,
+        "breach_rate_pct": 71.4953271028,
+        "mean_overrun_days": 3.4599465955,
+        "mean_vs_target_ratio": 1.6919893191
+      },
+      {
+        "sla_days": 10,
+        "complaints": 5798,
+        "mean_days": 17.1854087616,
+        "median_days": 16.0,
+        "p90_days": 30.0,
+        "breach_rate_pct": 75.1121076233,
+        "mean_overrun_days": 7.1854087616,
+        "mean_vs_target_ratio": 1.7185408762
+      },
+      {
+        "sla_days": 20,
+        "complaints": 16521,
+        "mean_days": 33.846437867,
+        "median_days": 32.0,
+        "p90_days": 59.0,
+        "breach_rate_pct": 75.8126021427,
+        "mean_overrun_days": 13.846437867,
+        "mean_vs_target_ratio": 1.6923218933
+      }
+    ],
+    "Regional Bottlenecks": [
+      {
+        "region": "Dunmoor",
+        "complaints": 4061,
+        "breach_rate_pct": 76.1388820488,
+        "mean_days": 28.2511696626,
+        "median_days": 25.0,
+        "breach_rank": 1,
+        "days_rank": 2
+      },
+      {
+        "region": "Barrowdale",
+        "complaints": 4020,
+        "breach_rate_pct": 75.8955223881,
+        "mean_days": 28.7052238806,
+        "median_days": 25.0,
+        "breach_rank": 2,
+        "days_rank": 1
+      },
+      {
+        "region": "Calderfield",
+        "complaints": 3848,
+        "breach_rate_pct": 75.5977130977,
+        "mean_days": 27.7858627859,
+        "median_days": 25.0,
+        "breach_rank": 3,
+        "days_rank": 6
+      },
+      {
+        "region": "Eastmarch",
+        "complaints": 3912,
+        "breach_rate_pct": 75.1533742331,
+        "mean_days": 28.2073108384,
+        "median_days": 25.0,
+        "breach_rank": 4,
+        "days_rank": 3
+      },
+      {
+        "region": "Ashford",
+        "complaints": 4026,
+        "breach_rate_pct": 74.7888723299,
+        "mean_days": 28.1823149528,
+        "median_days": 26.0,
+        "breach_rank": 5,
+        "days_rank": 4
+      },
+      {
+        "region": "Fenwick",
+        "complaints": 3950,
+        "breach_rate_pct": 74.6329113924,
+        "mean_days": 28.0098734177,
+        "median_days": 25.0,
+        "breach_rank": 6,
+        "days_rank": 5
+      }
+    ]
+  },
+  "B. Financial Impact (Bill Corrections)": {
+    "Total Financial Liability": [
+      {
+        "metric": "Total bill correction value",
+        "value": 1345189.54
+      },
+      {
+        "metric": "Complaints with a correction",
+        "value": 7874
+      },
+      {
+        "metric": "Share of closed complaints with a correction (%)",
+        "value": 33.0604190284
+      },
+      {
+        "metric": "Mean correction (where > 0)",
+        "value": 170.8394132588
+      },
+      {
+        "metric": "Median correction (where > 0)",
+        "value": 160.715
+      },
+      {
+        "metric": "Largest single correction",
+        "value": 687.76
+      }
+    ],
+    "Correction by Category": [
+      {
+        "category": "Billing - disputed amount",
+        "complaints": 7484,
+        "corrections": 5758,
+        "total_value": 970557.26,
+        "median_value_where_corrected": 158.255,
+        "share_of_total_pct": 72.1502235291
+      },
+      {
+        "category": "Billing - estimated read",
+        "complaints": 4485,
+        "corrections": 1862,
+        "total_value": 329885.92,
+        "median_value_where_corrected": 167.495,
+        "share_of_total_pct": 24.5233783189
+      },
+      {
+        "category": "Metering - no read taken",
+        "complaints": 2949,
+        "corrections": 254,
+        "total_value": 44746.36,
+        "median_value_where_corrected": 166.84,
+        "share_of_total_pct": 3.326398152
+      },
+      {
+        "category": "Other",
+        "complaints": 628,
+        "corrections": 0,
+        "total_value": 0.0,
+        "median_value_where_corrected": null,
+        "share_of_total_pct": 0.0
+      },
+      {
+        "category": "Payment - plan or arrears",
+        "complaints": 1521,
+        "corrections": 0,
+        "total_value": 0.0,
+        "median_value_where_corrected": null,
+        "share_of_total_pct": 0.0
+      },
+      {
+        "category": "Service - missed appointment",
+        "complaints": 1630,
+        "corrections": 0,
+        "total_value": 0.0,
+        "median_value_where_corrected": null,
+        "share_of_total_pct": 0.0
+      },
+      {
+        "category": "Service - poor communication",
+        "complaints": 1800,
+        "corrections": 0,
+        "total_value": 0.0,
+        "median_value_where_corrected": null,
+        "share_of_total_pct": 0.0
+      },
+      {
+        "category": "Supply - interruption",
+        "complaints": 2067,
+        "corrections": 0,
+        "total_value": 0.0,
+        "median_value_where_corrected": null,
+        "share_of_total_pct": 0.0
+      },
+      {
+        "category": "Water - pressure or quality",
+        "complaints": 1253,
+        "corrections": 0,
+        "total_value": 0.0,
+        "median_value_where_corrected": null,
+        "share_of_total_pct": 0.0
+      }
+    ],
+    "Account Repeat Summary": [
+      {
+        "metric": "Accounts with a closed complaint",
+        "accounts": 23523
+      },
+      {
+        "metric": "Accounts with 2+ complaints",
+        "accounts": 291
+      },
+      {
+        "metric": "Accounts with 2+ financial complaints",
+        "accounts": 25
+      }
+    ],
+    "Top 10 Accounts by Correction Value": [
+      {
+        "account_id": "ACC-698468",
+        "complaints": 1,
+        "financial_complaints": 1,
+        "total_value": 687.76
+      },
+      {
+        "account_id": "ACC-217364",
+        "complaints": 1,
+        "financial_complaints": 1,
+        "total_value": 611.98
+      },
+      {
+        "account_id": "ACC-237534",
+        "complaints": 1,
+        "financial_complaints": 1,
+        "total_value": 602.61
+      },
+      {
+        "account_id": "ACC-164312",
+        "complaints": 1,
+        "financial_complaints": 1,
+        "total_value": 597.3
+      },
+      {
+        "account_id": "ACC-277584",
+        "complaints": 1,
+        "financial_complaints": 1,
+        "total_value": 594.31
+      },
+      {
+        "account_id": "ACC-765405",
+        "complaints": 1,
+        "financial_complaints": 1,
+        "total_value": 593.41
+      },
+      {
+        "account_id": "ACC-567718",
+        "complaints": 1,
+        "financial_complaints": 1,
+        "total_value": 586.89
+      },
+      {
+        "account_id": "ACC-915562",
+        "complaints": 1,
+        "financial_complaints": 1,
+        "total_value": 584.65
+      },
+      {
+        "account_id": "ACC-320792",
+        "complaints": 2,
+        "financial_complaints": 2,
+        "total_value": 583.18
+      },
+      {
+        "account_id": "ACC-611735",
+        "complaints": 1,
+        "financial_complaints": 1,
+        "total_value": 579.84
+      }
+    ],
+    "Top 10 Accounts by Financial Complaint Volume": [
+      {
+        "account_id": "ACC-320792",
+        "complaints": 2,
+        "financial_complaints": 2,
+        "total_value": 583.18
+      },
+      {
+        "account_id": "ACC-807845",
+        "complaints": 2,
+        "financial_complaints": 2,
+        "total_value": 459.22
+      },
+      {
+        "account_id": "ACC-214026",
+        "complaints": 2,
+        "financial_complaints": 2,
+        "total_value": 455.42
+      },
+      {
+        "account_id": "ACC-828615",
+        "complaints": 2,
+        "financial_complaints": 2,
+        "total_value": 448.67
+      },
+      {
+        "account_id": "ACC-634600",
+        "complaints": 2,
+        "financial_complaints": 2,
+        "total_value": 447.59
+      },
+      {
+        "account_id": "ACC-202749",
+        "complaints": 2,
+        "financial_complaints": 2,
+        "total_value": 379.48
+      },
+      {
+        "account_id": "ACC-472454",
+        "complaints": 2,
+        "financial_complaints": 2,
+        "total_value": 378.24
+      },
+      {
+        "account_id": "ACC-301174",
+        "complaints": 2,
+        "financial_complaints": 2,
+        "total_value": 339.36
+      },
+      {
+        "account_id": "ACC-730009",
+        "complaints": 2,
+        "financial_complaints": 2,
+        "total_value": 337.63
+      },
+      {
+        "account_id": "ACC-583852",
+        "complaints": 3,
+        "financial_complaints": 2,
+        "total_value": 330.18
+      }
+    ]
+  },
+  "C. Reopen Rate & Resolution Efficacy": {
+    "The \"Information Only\" Risk": [
+      {
+        "resolvable_by_information_only": "No",
+        "complaints": 17952,
+        "reopened": 2826,
+        "reopen_rate_pct": 15.7419786096
+      },
+      {
+        "resolvable_by_information_only": "Yes",
+        "complaints": 5865,
+        "reopened": 950,
+        "reopen_rate_pct": 16.1977834612
+      }
+    ],
+    "Reopen Rate by Resolution Action": [
+      {
+        "resolution_action": "Refund or credit applied",
+        "complaints": 1785,
+        "reopened": 312,
+        "reopen_rate_pct": 17.4789915966,
+        "info_only_resolvable_pct": 0.0
+      },
+      {
+        "resolution_action": "Information provided only",
+        "complaints": 4783,
+        "reopened": 777,
+        "reopen_rate_pct": 16.2450344972,
+        "info_only_resolvable_pct": 100.0
+      },
+      {
+        "resolution_action": "Compensation payment issued",
+        "complaints": 764,
+        "reopened": 124,
+        "reopen_rate_pct": 16.2303664921,
+        "info_only_resolvable_pct": 0.0
+      },
+      {
+        "resolution_action": "Field repair required",
+        "complaints": 2074,
+        "reopened": 334,
+        "reopen_rate_pct": 16.1041465767,
+        "info_only_resolvable_pct": 0.0
+      },
+      {
+        "resolution_action": "No action - explained to customer",
+        "complaints": 1082,
+        "reopened": 173,
+        "reopen_rate_pct": 15.988909427,
+        "info_only_resolvable_pct": 100.0
+      },
+      {
+        "resolution_action": "Meter visit required",
+        "complaints": 4055,
+        "reopened": 643,
+        "reopen_rate_pct": 15.8569667078,
+        "info_only_resolvable_pct": 0.0
+      },
+      {
+        "resolution_action": "Bill corrected and re-issued",
+        "complaints": 6089,
+        "reopened": 953,
+        "reopen_rate_pct": 15.6511742486,
+        "info_only_resolvable_pct": 0.0
+      },
+      {
+        "resolution_action": "Apology and manual process fix",
+        "complaints": 976,
+        "reopened": 147,
+        "reopen_rate_pct": 15.0614754098,
+        "info_only_resolvable_pct": 0.0
+      },
+      {
+        "resolution_action": "Payment plan amended",
+        "complaints": 1122,
+        "reopened": 160,
+        "reopen_rate_pct": 14.2602495544,
+        "info_only_resolvable_pct": 0.0
+      },
+      {
+        "resolution_action": "Appointment rebooked by agent",
+        "complaints": 1087,
+        "reopened": 153,
+        "reopen_rate_pct": 14.0754369825,
+        "info_only_resolvable_pct": 0.0
+      }
+    ],
+    "Channel-Specific Resolution": [
+      {
+        "channel": "Social",
+        "complaints": 1393,
+        "info_only_resolvable_pct": 25.6281407035,
+        "reopen_rate_pct": 15.5778894472,
+        "breach_rate_pct": 75.807609476
+      },
+      {
+        "channel": "Regulator referral",
+        "complaints": 1144,
+        "info_only_resolvable_pct": 25.3496503497,
+        "reopen_rate_pct": 15.472027972,
+        "breach_rate_pct": 75.8741258741
+      },
+      {
+        "channel": "Phone",
+        "complaints": 12967,
+        "info_only_resolvable_pct": 24.8245546387,
+        "reopen_rate_pct": 15.8941929513,
+        "breach_rate_pct": 75.3373949256
+      },
+      {
+        "channel": "Email",
+        "complaints": 2774,
+        "info_only_resolvable_pct": 24.6214852199,
+        "reopen_rate_pct": 16.149963951,
+        "breach_rate_pct": 74.8738284066
+      },
+      {
+        "channel": "Post",
+        "complaints": 1190,
+        "info_only_resolvable_pct": 24.1176470588,
+        "reopen_rate_pct": 14.2857142857,
+        "breach_rate_pct": 73.2773109244
+      },
+      {
+        "channel": "Web form",
+        "complaints": 4349,
+        "info_only_resolvable_pct": 23.6606116349,
+        "reopen_rate_pct": 16.1646355484,
+        "breach_rate_pct": 76.0864566567
+      }
+    ]
+  },
+  "D. Time-Series & Trends": {
+    "Volume & SLA Degradation by Month": [
+      {
+        "month_year": "2024-10",
+        "opened": 912,
+        "still_open": 0,
+        "closed": 912,
+        "mean_days": 17.6052631579,
+        "breach_rate_pct": 43.9692982456,
+        "rolling_3m_breach_pct": null
+      },
+      {
+        "month_year": "2024-11",
+        "opened": 830,
+        "still_open": 0,
+        "closed": 830,
+        "mean_days": 19.4361445783,
+        "breach_rate_pct": 49.8795180723,
+        "rolling_3m_breach_pct": null
+      },
+      {
+        "month_year": "2024-12",
+        "opened": 951,
+        "still_open": 0,
+        "closed": 951,
+        "mean_days": 19.4574132492,
+        "breach_rate_pct": 51.1041009464,
+        "rolling_3m_breach_pct": 48.3104344597
+      },
+      {
+        "month_year": "2025-01",
+        "opened": 985,
+        "still_open": 0,
+        "closed": 985,
+        "mean_days": 20.5015228426,
+        "breach_rate_pct": 55.0253807107,
+        "rolling_3m_breach_pct": 52.133044107
+      },
+      {
+        "month_year": "2025-02",
+        "opened": 851,
+        "still_open": 0,
+        "closed": 851,
+        "mean_days": 21.7262044653,
+        "breach_rate_pct": 58.5193889542,
+        "rolling_3m_breach_pct": 54.7542160029
+      },
+      {
+        "month_year": "2025-03",
+        "opened": 901,
+        "still_open": 0,
+        "closed": 901,
+        "mean_days": 21.7835738069,
+        "breach_rate_pct": 61.15427303,
+        "rolling_3m_breach_pct": 58.129338692
+      },
+      {
+        "month_year": "2025-04",
+        "opened": 1023,
+        "still_open": 0,
+        "closed": 1023,
+        "mean_days": 23.6187683284,
+        "breach_rate_pct": 60.899315738,
+        "rolling_3m_breach_pct": 60.2522522523
+      },
+      {
+        "month_year": "2025-05",
+        "opened": 1004,
+        "still_open": 0,
+        "closed": 1004,
+        "mean_days": 24.2390438247,
+        "breach_rate_pct": 65.1394422311,
+        "rolling_3m_breach_pct": 62.4316939891
+      },
+      {
+        "month_year": "2025-06",
+        "opened": 982,
+        "still_open": 0,
+        "closed": 982,
+        "mean_days": 24.882892057,
+        "breach_rate_pct": 67.1079429735,
+        "rolling_3m_breach_pct": 64.3403123961
+      },
+      {
+        "month_year": "2025-07",
+        "opened": 1222,
+        "still_open": 0,
+        "closed": 1222,
+        "mean_days": 26.7741407529,
+        "breach_rate_pct": 72.3404255319,
+        "rolling_3m_breach_pct": 68.4850374065
+      },
+      {
+        "month_year": "2025-08",
+        "opened": 1026,
+        "still_open": 0,
+        "closed": 1026,
+        "mean_days": 28.537037037,
+        "breach_rate_pct": 76.6081871345,
+        "rolling_3m_breach_pct": 72.1052631579
+      },
+      {
+        "month_year": "2025-09",
+        "opened": 1020,
+        "still_open": 0,
+        "closed": 1020,
+        "mean_days": 27.8009803922,
+        "breach_rate_pct": 76.7647058824,
+        "rolling_3m_breach_pct": 75.0611995104
+      },
+      {
+        "month_year": "2025-10",
+        "opened": 1189,
+        "still_open": 0,
+        "closed": 1189,
+        "mean_days": 29.5971404542,
+        "breach_rate_pct": 80.3195962994,
+        "rolling_3m_breach_pct": 78.0216383308
+      },
+      {
+        "month_year": "2025-11",
+        "opened": 940,
+        "still_open": 0,
+        "closed": 940,
+        "mean_days": 31.1031914894,
+        "breach_rate_pct": 82.7659574468,
+        "rolling_3m_breach_pct": 79.8983804382
+      },
+      {
+        "month_year": "2025-12",
+        "opened": 1120,
+        "still_open": 0,
+        "closed": 1120,
+        "mean_days": 31.8848214286,
+        "breach_rate_pct": 83.8392857143,
+        "rolling_3m_breach_pct": 82.2406894429
+      },
+      {
+        "month_year": "2026-01",
+        "opened": 1177,
+        "still_open": 0,
+        "closed": 1177,
+        "mean_days": 32.8980458794,
+        "breach_rate_pct": 85.8113848768,
+        "rolling_3m_breach_pct": 84.2446709917
+      },
+      {
+        "month_year": "2026-02",
+        "opened": 1002,
+        "still_open": 0,
+        "closed": 1002,
+        "mean_days": 33.3343313373,
+        "breach_rate_pct": 88.9221556886,
+        "rolling_3m_breach_pct": 86.0866929373
+      },
+      {
+        "month_year": "2026-03",
+        "opened": 1171,
+        "still_open": 0,
+        "closed": 1171,
+        "mean_days": 34.5704526046,
+        "breach_rate_pct": 88.8129803587,
+        "rolling_3m_breach_pct": 87.7910447761
+      },
+      {
+        "month_year": "2026-04",
+        "opened": 1190,
+        "still_open": 0,
+        "closed": 1190,
+        "mean_days": 34.6067226891,
+        "breach_rate_pct": 91.1764705882,
+        "rolling_3m_breach_pct": 89.6818316979
+      },
+      {
+        "month_year": "2026-05",
+        "opened": 1049,
+        "still_open": 1,
+        "closed": 1048,
+        "mean_days": 36.4646946565,
+        "breach_rate_pct": 92.1755725191,
+        "rolling_3m_breach_pct": 90.6717512467
+      },
+      {
+        "month_year": "2026-06",
+        "opened": 1164,
+        "still_open": 10,
+        "closed": 1154,
+        "mean_days": 36.417677643,
+        "breach_rate_pct": 92.6343154246,
+        "rolling_3m_breach_pct": 91.9811320755
+      },
+      {
+        "month_year": "2026-07",
+        "opened": 1271,
+        "still_open": 78,
+        "closed": 1193,
+        "mean_days": 34.8801341157,
+        "breach_rate_pct": 93.5456831517,
+        "rolling_3m_breach_pct": 92.8129602356
+      },
+      {
+        "month_year": "2026-08",
+        "opened": 1185,
+        "still_open": 409,
+        "closed": 776,
+        "mean_days": 27.506443299,
+        "breach_rate_pct": 91.7525773196,
+        "rolling_3m_breach_pct": 92.7633685559
+      },
+      {
+        "month_year": "2026-09",
+        "opened": 1251,
+        "still_open": 1101,
+        "closed": 150,
+        "mean_days": 13.86,
+        "breach_rate_pct": 72.6666666667,
+        "rolling_3m_breach_pct": 91.4110429448
+      }
+    ],
+    "Category Spikes": [
+      {
+        "category": "Other",
+        "peak_month": "2026-06",
+        "peak_count": 43,
+        "monthly_mean": 27.9583333333,
+        "peak_vs_mean": 1.5380029806,
+        "peak_z_score": 2.1920679101,
+        "top_calendar_months": "May, Sep, Jun"
+      },
+      {
+        "category": "Water - pressure or quality",
+        "peak_month": "2026-05",
+        "peak_count": 73,
+        "monthly_mean": 54.7083333333,
+        "peak_vs_mean": 1.3343488195,
+        "peak_z_score": 1.7096027326,
+        "top_calendar_months": "Jul, Jan, May"
+      },
+      {
+        "category": "Payment - plan or arrears",
+        "peak_month": "2025-07",
+        "peak_count": 89,
+        "monthly_mean": 66.7083333333,
+        "peak_vs_mean": 1.3341661462,
+        "peak_z_score": 1.7780943844,
+        "top_calendar_months": "Jul, Jan, Aug"
+      },
+      {
+        "category": "Service - poor communication",
+        "peak_month": "2026-01",
+        "peak_count": 106,
+        "monthly_mean": 79.5,
+        "peak_vs_mean": 1.3333333333,
+        "peak_z_score": 2.1738209142,
+        "top_calendar_months": "Sep, Jan, Jul"
+      },
+      {
+        "category": "Supply - interruption",
+        "peak_month": "2026-04",
+        "peak_count": 121,
+        "monthly_mean": 91.3333333333,
+        "peak_vs_mean": 1.3248175182,
+        "peak_z_score": 1.9701152572,
+        "top_calendar_months": "Jul, Aug, Apr"
+      },
+      {
+        "category": "Billing - estimated read",
+        "peak_month": "2026-09",
+        "peak_count": 258,
+        "monthly_mean": 201.375,
+        "peak_vs_mean": 1.2811918063,
+        "peak_z_score": 2.2289593385,
+        "top_calendar_months": "Jul, Sep, Aug"
+      },
+      {
+        "category": "Metering - no read taken",
+        "peak_month": "2026-07",
+        "peak_count": 164,
+        "monthly_mean": 130.0,
+        "peak_vs_mean": 1.2615384615,
+        "peak_z_score": 1.7009246669,
+        "top_calendar_months": "Jul, Apr, Jan"
+      },
+      {
+        "category": "Service - missed appointment",
+        "peak_month": "2026-08",
+        "peak_count": 88,
+        "monthly_mean": 71.5833333333,
+        "peak_vs_mean": 1.2293364377,
+        "peak_z_score": 1.6234750826,
+        "top_calendar_months": "Jul, Aug, Apr"
+      },
+      {
+        "category": "Billing - disputed amount",
+        "peak_month": "2026-09",
+        "peak_count": 407,
+        "monthly_mean": 335.8333333333,
+        "peak_vs_mean": 1.21191067,
+        "peak_z_score": 1.7061897287,
+        "top_calendar_months": "Jul, Sep, Aug"
+      }
+    ],
+    "Monthly Complaints by Category": [
+      {
+        "month_year": "2024-10",
+        "Billing - disputed amount": 306,
+        "Billing - estimated read": 176,
+        "Metering - no read taken": 111,
+        "Other": 32,
+        "Payment - plan or arrears": 49,
+        "Service - missed appointment": 56,
+        "Service - poor communication": 70,
+        "Supply - interruption": 68,
+        "Water - pressure or quality": 44
+      },
+      {
+        "month_year": "2024-11",
+        "Billing - disputed amount": 260,
+        "Billing - estimated read": 175,
+        "Metering - no read taken": 97,
+        "Other": 18,
+        "Payment - plan or arrears": 37,
+        "Service - missed appointment": 52,
+        "Service - poor communication": 54,
+        "Supply - interruption": 91,
+        "Water - pressure or quality": 46
+      },
+      {
+        "month_year": "2024-12",
+        "Billing - disputed amount": 312,
+        "Billing - estimated read": 179,
+        "Metering - no read taken": 115,
+        "Other": 17,
+        "Payment - plan or arrears": 53,
+        "Service - missed appointment": 65,
+        "Service - poor communication": 72,
+        "Supply - interruption": 90,
+        "Water - pressure or quality": 48
+      },
+      {
+        "month_year": "2025-01",
+        "Billing - disputed amount": 305,
+        "Billing - estimated read": 170,
+        "Metering - no read taken": 133,
+        "Other": 30,
+        "Payment - plan or arrears": 64,
+        "Service - missed appointment": 71,
+        "Service - poor communication": 78,
+        "Supply - interruption": 82,
+        "Water - pressure or quality": 52
+      },
+      {
+        "month_year": "2025-02",
+        "Billing - disputed amount": 281,
+        "Billing - estimated read": 163,
+        "Metering - no read taken": 111,
+        "Other": 17,
+        "Payment - plan or arrears": 68,
+        "Service - missed appointment": 49,
+        "Service - poor communication": 57,
+        "Supply - interruption": 71,
+        "Water - pressure or quality": 34
+      },
+      {
+        "month_year": "2025-03",
+        "Billing - disputed amount": 276,
+        "Billing - estimated read": 173,
+        "Metering - no read taken": 115,
+        "Other": 26,
+        "Payment - plan or arrears": 53,
+        "Service - missed appointment": 64,
+        "Service - poor communication": 74,
+        "Supply - interruption": 74,
+        "Water - pressure or quality": 46
+      },
+      {
+        "month_year": "2025-04",
+        "Billing - disputed amount": 319,
+        "Billing - estimated read": 202,
+        "Metering - no read taken": 144,
+        "Other": 22,
+        "Payment - plan or arrears": 64,
+        "Service - missed appointment": 74,
+        "Service - poor communication": 76,
+        "Supply - interruption": 76,
+        "Water - pressure or quality": 46
+      },
+      {
+        "month_year": "2025-05",
+        "Billing - disputed amount": 342,
+        "Billing - estimated read": 168,
+        "Metering - no read taken": 112,
+        "Other": 37,
+        "Payment - plan or arrears": 62,
+        "Service - missed appointment": 73,
+        "Service - poor communication": 78,
+        "Supply - interruption": 86,
+        "Water - pressure or quality": 46
+      },
+      {
+        "month_year": "2025-06",
+        "Billing - disputed amount": 320,
+        "Billing - estimated read": 183,
+        "Metering - no read taken": 117,
+        "Other": 26,
+        "Payment - plan or arrears": 63,
+        "Service - missed appointment": 74,
+        "Service - poor communication": 72,
+        "Supply - interruption": 84,
+        "Water - pressure or quality": 43
+      },
+      {
+        "month_year": "2025-07",
+        "Billing - disputed amount": 386,
+        "Billing - estimated read": 242,
+        "Metering - no read taken": 157,
+        "Other": 24,
+        "Payment - plan or arrears": 89,
+        "Service - missed appointment": 86,
+        "Service - poor communication": 88,
+        "Supply - interruption": 87,
+        "Water - pressure or quality": 63
+      },
+      {
+        "month_year": "2025-08",
+        "Billing - disputed amount": 319,
+        "Billing - estimated read": 210,
+        "Metering - no read taken": 116,
+        "Other": 24,
+        "Payment - plan or arrears": 73,
+        "Service - missed appointment": 72,
+        "Service - poor communication": 73,
+        "Supply - interruption": 92,
+        "Water - pressure or quality": 47
+      },
+      {
+        "month_year": "2025-09",
+        "Billing - disputed amount": 294,
+        "Billing - estimated read": 199,
+        "Metering - no read taken": 119,
+        "Other": 31,
+        "Payment - plan or arrears": 66,
+        "Service - missed appointment": 71,
+        "Service - poor communication": 99,
+        "Supply - interruption": 86,
+        "Water - pressure or quality": 55
+      },
+      {
+        "month_year": "2025-10",
+        "Billing - disputed amount": 378,
+        "Billing - estimated read": 228,
+        "Metering - no read taken": 149,
+        "Other": 24,
+        "Payment - plan or arrears": 86,
+        "Service - missed appointment": 77,
+        "Service - poor communication": 82,
+        "Supply - interruption": 98,
+        "Water - pressure or quality": 67
+      },
+      {
+        "month_year": "2025-11",
+        "Billing - disputed amount": 298,
+        "Billing - estimated read": 197,
+        "Metering - no read taken": 95,
+        "Other": 25,
+        "Payment - plan or arrears": 61,
+        "Service - missed appointment": 69,
+        "Service - poor communication": 73,
+        "Supply - interruption": 77,
+        "Water - pressure or quality": 45
+      },
+      {
+        "month_year": "2025-12",
+        "Billing - disputed amount": 355,
+        "Billing - estimated read": 213,
+        "Metering - no read taken": 124,
+        "Other": 27,
+        "Payment - plan or arrears": 78,
+        "Service - missed appointment": 83,
+        "Service - poor communication": 71,
+        "Supply - interruption": 107,
+        "Water - pressure or quality": 62
+      },
+      {
+        "month_year": "2026-01",
+        "Billing - disputed amount": 352,
+        "Billing - estimated read": 212,
+        "Metering - no read taken": 138,
+        "Other": 34,
+        "Payment - plan or arrears": 82,
+        "Service - missed appointment": 77,
+        "Service - poor communication": 106,
+        "Supply - interruption": 105,
+        "Water - pressure or quality": 71
+      },
+      {
+        "month_year": "2026-02",
+        "Billing - disputed amount": 305,
+        "Billing - estimated read": 208,
+        "Metering - no read taken": 125,
+        "Other": 20,
+        "Payment - plan or arrears": 62,
+        "Service - missed appointment": 68,
+        "Service - poor communication": 76,
+        "Supply - interruption": 82,
+        "Water - pressure or quality": 56
+      },
+      {
+        "month_year": "2026-03",
+        "Billing - disputed amount": 384,
+        "Billing - estimated read": 215,
+        "Metering - no read taken": 156,
+        "Other": 31,
+        "Payment - plan or arrears": 74,
+        "Service - missed appointment": 76,
+        "Service - poor communication": 92,
+        "Supply - interruption": 83,
+        "Water - pressure or quality": 60
+      },
+      {
+        "month_year": "2026-04",
+        "Billing - disputed amount": 368,
+        "Billing - estimated read": 212,
+        "Metering - no read taken": 157,
+        "Other": 31,
+        "Payment - plan or arrears": 76,
+        "Service - missed appointment": 78,
+        "Service - poor communication": 79,
+        "Supply - interruption": 121,
+        "Water - pressure or quality": 68
+      },
+      {
+        "month_year": "2026-05",
+        "Billing - disputed amount": 349,
+        "Billing - estimated read": 180,
+        "Metering - no read taken": 128,
+        "Other": 33,
+        "Payment - plan or arrears": 53,
+        "Service - missed appointment": 71,
+        "Service - poor communication": 76,
+        "Supply - interruption": 86,
+        "Water - pressure or quality": 73
+      },
+      {
+        "month_year": "2026-06",
+        "Billing - disputed amount": 368,
+        "Billing - estimated read": 214,
+        "Metering - no read taken": 152,
+        "Other": 43,
+        "Payment - plan or arrears": 62,
+        "Service - missed appointment": 60,
+        "Service - poor communication": 93,
+        "Supply - interruption": 112,
+        "Water - pressure or quality": 60
+      },
+      {
+        "month_year": "2026-07",
+        "Billing - disputed amount": 400,
+        "Billing - estimated read": 228,
+        "Metering - no read taken": 164,
+        "Other": 34,
+        "Payment - plan or arrears": 83,
+        "Service - missed appointment": 83,
+        "Service - poor communication": 91,
+        "Supply - interruption": 119,
+        "Water - pressure or quality": 69
+      },
+      {
+        "month_year": "2026-08",
+        "Billing - disputed amount": 376,
+        "Billing - estimated read": 228,
+        "Metering - no read taken": 135,
+        "Other": 26,
+        "Payment - plan or arrears": 70,
+        "Service - missed appointment": 88,
+        "Service - poor communication": 86,
+        "Supply - interruption": 112,
+        "Water - pressure or quality": 64
+      },
+      {
+        "month_year": "2026-09",
+        "Billing - disputed amount": 407,
+        "Billing - estimated read": 258,
+        "Metering - no read taken": 150,
+        "Other": 39,
+        "Payment - plan or arrears": 73,
+        "Service - missed appointment": 81,
+        "Service - poor communication": 92,
+        "Supply - interruption": 103,
+        "Water - pressure or quality": 48
+      }
+    ]
+  },
+  "E. Source System Friction": {
+    "System Workloads": [
+      {
+        "source_system": "SYS-01",
+        "complaints": 6479,
+        "still_open": 415,
+        "share_pct": 25.4918161788
+      },
+      {
+        "source_system": "SYS-05",
+        "complaints": 6374,
+        "still_open": 433,
+        "share_pct": 25.0786905886
+      },
+      {
+        "source_system": "SYS-03",
+        "complaints": 6282,
+        "still_open": 412,
+        "share_pct": 24.716713881
+      },
+      {
+        "source_system": "SYS-04",
+        "complaints": 6281,
+        "still_open": 339,
+        "share_pct": 24.7127793516
+      }
+    ],
+    "System Efficacy & Friction": [
+      {
+        "source_system": "SYS-01",
+        "complaints": 6064,
+        "transfer_rate_pct": 46.2401055409,
+        "mean_days": 30.2156992084,
+        "median_days": 27.0,
+        "breach_rate_pct": 78.1167546174,
+        "reopen_rate_pct": 18.1068601583,
+        "transfer_days_corr": 0.4086616,
+        "friction_rank": 1
+      },
+      {
+        "source_system": "SYS-03",
+        "complaints": 5870,
+        "transfer_rate_pct": 45.5877342419,
+        "mean_days": 29.4109028961,
+        "median_days": 26.0,
+        "breach_rate_pct": 76.8654173765,
+        "reopen_rate_pct": 17.9045996593,
+        "transfer_days_corr": 0.3715976872,
+        "friction_rank": 2
+      },
+      {
+        "source_system": "SYS-05",
+        "complaints": 5941,
+        "transfer_rate_pct": 44.9250967851,
+        "mean_days": 29.9166806935,
+        "median_days": 26.0,
+        "breach_rate_pct": 76.9567412893,
+        "reopen_rate_pct": 18.0777646861,
+        "transfer_days_corr": 0.3961841675,
+        "friction_rank": 2
+      },
+      {
+        "source_system": "SYS-04",
+        "complaints": 5942,
+        "transfer_rate_pct": 0.0,
+        "mean_days": 23.2053180747,
+        "median_days": 22.0,
+        "breach_rate_pct": 69.5052170986,
+        "reopen_rate_pct": 9.3066307641,
+        "transfer_days_corr": null,
+        "friction_rank": 4
+      }
+    ]
+  }
+}
