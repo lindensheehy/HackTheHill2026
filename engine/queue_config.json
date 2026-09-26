@@ -1,0 +1,9 @@
+{
+  "priority_weight": {"P1": 3, "P2": 2, "P3": 1},
+  "transferred_bonus": 0.25,
+  "alert_bonus": 0.25,
+  "amber_days": 2,
+  "imminence_horizon_days": 20,
+  "assumed_complaint_fte": 60,
+  "notes": "queue_score = w_p * (1 + overdue_ratio) if breached, else w_p * breach_risk * imminence, with imminence = 1 - days_left / 20; plus bonuses. Breached cases carry risk = imminence = 1 so the score rises continuously through the deadline."
+}
