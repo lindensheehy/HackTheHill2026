@@ -2,6 +2,10 @@
 
 Run:  python -m jobs.detect_alerts
 
+Storage: the panel lives in the `signal_points` table (a TimescaleDB hypertable on Tiger Cloud). Rows have a
+source: `derived` (rebuilt from the source tables), `ingest` (POST /api/signals, the live feed) or `simulated`
+(the demo scenario, synthetic = 1). Detection always reads the stored feed.
+
 Signals per region and month: complaint count per category, SLA breach rate, billing exceptions
 per 1k accounts, estimated read rate. A signal fires when its z-score against the region's own
 trailing 6 months is >= 3 (spikes) or when a CUSUM detector crosses its threshold (slow drift).
@@ -9,7 +13,10 @@ Alerts on the same signal in the same month in 2+ regions are grouped and tagged
 systems those regions share.
 """
 
+import hashlib
 import json
+import math
+import re
 
 import numpy as np
 import pandas as pd
@@ -149,7 +156,8 @@ def group(found, synthetic=False):
         ]
         category = g["category"].iloc[0]
         related = [category] if isinstance(category, str) else SIGNAL_CATEGORY.get(signal, [])
-        alert_id = f"{'SIM' if synthetic else 'AL'}-{month}-{abs(hash((signal, tuple(regions)))) % 10**6:06d}"
+        digest = hashlib.sha1(f"{signal}|{','.join(regions)}".encode()).hexdigest()[:6]
+        alert_id = f"{'SIM' if synthetic else 'AL'}-{month}-{digest}"
         alerts.append({
             "alert_id": alert_id,
             "month": month,
@@ -172,22 +180,114 @@ def group(found, synthetic=False):
     return alerts
 
 
-def save(alerts, replace_real=True, conn=None):
-    conn = conn or db.app_conn()
-    with conn:
+def save(alerts, replace_real=True):
+    with db.store().transaction() as tx:
         if replace_real:
-            conn.execute("DELETE FROM alerts WHERE synthetic = 0")
-        conn.executemany(
-            "INSERT OR REPLACE INTO alerts VALUES (?,?,?,?,?,?,?,?,?,?)",
-            [(a["alert_id"], a["month"], a["signal"], a["category"], json.dumps(a["regions"]),
-              a["z"], json.dumps(a["shared_systems"]), a["status"], a["synthetic"],
-              json.dumps(a["detail"])) for a in alerts],
-        )
+            tx.execute("DELETE FROM alerts WHERE synthetic = 0")
+        tx.upsert("alerts", ALERT_COLS, [
+            (a["alert_id"], a["month"], a["signal"], a["category"], json.dumps(a["regions"]),
+             a["z"], json.dumps(a["shared_systems"]), a["status"], a["synthetic"],
+             json.dumps(a["detail"])) for a in alerts], key=["alert_id"])
     return alerts
 
 
+ALERT_COLS = ["alert_id", "month", "signal", "category", "regions", "z", "shared_systems", "status", "synthetic", "detail"]
+_SOURCE_RANK = {"derived": 0, "ingest": 1, "simulated": 2}
+
+
+# ---- The stored signal feed ------------------------------------------------------------------
+
+def _insert_points(tx, df, synthetic, source):
+    tx.executemany(
+        "INSERT INTO signal_points (time, month, region, signal, category, value, synthetic, source) VALUES (?,?,?,?,?,?,?,?)",
+        [(f"{r.month}-01", r.month, r.region, r.signal, r.category if isinstance(r.category, str) else None,
+          float(r.value), synthetic, source) for r in df.itertuples()],
+    )
+
+
+def materialize(panel=None):
+    """Rebuild the `derived` part of the feed from the source tables. Ingested and simulated points are kept."""
+    panel = build_panel() if panel is None else panel
+    with db.store().transaction() as tx:
+        tx.execute("DELETE FROM signal_points WHERE source = 'derived'")
+        _insert_points(tx, panel, 0, "derived")
+    return len(panel)
+
+
+def load_panel(synthetic=False):
+    """The stored feed as a panel. Where sources overlap, simulated beats ingest beats derived."""
+    s = db.store()
+    q = "SELECT region, month, signal, category, value, synthetic, source FROM signal_points"
+    q += "" if synthetic else " WHERE synthetic = 0"
+    df = s.df(q)
+    if df.empty and not s.scalar("SELECT COUNT(*) AS n FROM signal_points"):
+        materialize()
+        df = s.df(q)
+    df["value"] = df["value"].astype(float)
+    df["_rank"] = df["source"].map(_SOURCE_RANK).fillna(0)
+    df = df.sort_values("_rank", kind="stable").drop_duplicates(["region", "month", "signal"], keep="last")
+    return df.drop(columns="_rank").reset_index(drop=True)
+
+
+def run_detection():
+    """Detect on the stored feed (derived + ingested) and replace the real alerts."""
+    return save(group(detect(load_panel())))
+
+
 def run():
-    return save(group(detect(build_panel())))
+    """Full rebuild: re-derive the feed from source tables, then detect."""
+    materialize()
+    return run_detection()
+
+
+def feed_summary():
+    rows = db.store().query(
+        "SELECT source, COUNT(*) AS n, MIN(month) AS first, MAX(month) AS last FROM signal_points GROUP BY source")
+    return {r["source"]: {"points": int(r["n"]), "first": r["first"], "last": r["last"]} for r in rows}
+
+
+def ingest(points):
+    """Live-feed ingestion. points: [{region, month 'YYYY-MM', signal, value, category?}].
+
+    Validated strictly, stored as source 'ingest', then detection reruns so alerts reflect the new data.
+    """
+    regions = set(db.region_systems())
+    cats = set(db.complaints()["category"].unique())
+    clean = []
+    for i, p in enumerate(points):
+        region, month, signal = p.get("region"), str(p.get("month", "")), p.get("signal", "")
+        try:
+            value = float(p.get("value"))
+        except (TypeError, ValueError):
+            raise ValueError(f"point {i}: value must be a number")
+        if region not in regions:
+            raise ValueError(f"point {i}: unknown region {region!r}")
+        if not re.fullmatch(r"\d{4}-(0[1-9]|1[0-2])", month):
+            raise ValueError(f"point {i}: month must be YYYY-MM")
+        if not math.isfinite(value) or value < 0:
+            raise ValueError(f"point {i}: value must be finite and >= 0")
+        category = None
+        if signal.startswith("complaints:"):
+            category = signal.split(":", 1)[1]
+            if category not in cats:
+                raise ValueError(f"point {i}: unknown category {category!r}")
+        elif signal not in (*METER_SIGNALS, "sla_breach_rate"):
+            raise ValueError(f"point {i}: unknown signal {signal!r}")
+        clean.append({"region": region, "month": month, "signal": signal, "category": category, "value": value})
+    if not clean:
+        raise ValueError("no points")
+    with db.store().transaction() as tx:
+        for r in clean:
+            tx.execute("DELETE FROM signal_points WHERE source = 'ingest' AND region = ? AND month = ? AND signal = ?",
+                       (r["region"], r["month"], r["signal"]))
+        _insert_points(tx, pd.DataFrame(clean), 0, "ingest")
+    alerts = run_detection()
+    return {"ingested": len(clean), "active_alerts": [a for a in alerts if a["status"] == "active"]}
+
+
+def clear_ingested():
+    db.store().execute("DELETE FROM signal_points WHERE source = 'ingest'")
+    return run_detection()
 
 
 # ---- Simulated feed for the demo -------------------------------------------------------------
@@ -205,12 +305,12 @@ SCENARIO = {
 
 
 def inject_scenario():
-    """Append a synthetic month to the real panel, run the same detector on it, store results."""
-    panel = build_panel()
+    """Write a synthetic month into the stored feed, then run the same detector over the stored data."""
+    panel = load_panel()
     last = panel[panel["month"] == panel[panel["signal"].str.startswith("complaints:")]["month"].max()]
     last_meter = panel[panel["month"] == "2026-09"]
-    new = pd.concat([last, last_meter[last_meter["signal"].isin(METER_SIGNALS)]]).drop_duplicates()
-    new = new[new["signal"] != "sla_breach_rate"].copy()
+    new = pd.concat([last, last_meter[last_meter["signal"].isin(METER_SIGNALS)]])
+    new = new[new["signal"] != "sla_breach_rate"].drop_duplicates(["region", "signal"]).copy()
     new["month"] = SCENARIO_MONTH
     hit = new["region"].isin(SCENARIO["regions"])
     for cat, mult in SCENARIO["complaint_multiplier"].items():
@@ -218,28 +318,26 @@ def inject_scenario():
         new.loc[rows, "value"] = (new.loc[rows, "value"] * mult).round()
     new.loc[hit & (new["signal"] == "exceptions_per_1k"), "value"] *= SCENARIO["exceptions_multiplier"]
     new.loc[hit & (new["signal"] == "estimated_read_rate"), "value"] += SCENARIO["estimated_read_delta"]
-    alerts = group(detect(pd.concat([panel, new]), months={SCENARIO_MONTH}), synthetic=True)
     reset_scenario()
+    with db.store().transaction() as tx:
+        _insert_points(tx, new, 1, "simulated")
+    alerts = group(detect(load_panel(synthetic=True), months={SCENARIO_MONTH}), synthetic=True)
     return save(alerts, replace_real=False)
 
 
 def reset_scenario():
-    conn = db.app_conn()
-    with conn:
-        conn.execute("DELETE FROM alerts WHERE synthetic = 1")
+    with db.store().transaction() as tx:
+        tx.execute("DELETE FROM alerts WHERE synthetic = 1")
+        tx.execute("DELETE FROM signal_points WHERE synthetic = 1")
 
 
 def load_alerts(status=None):
-    conn = db.app_conn()
     q = "SELECT * FROM alerts" + (" WHERE status = ?" if status else "") + " ORDER BY month DESC, z DESC"
-    rows = conn.execute(q, (status,) if status else ()).fetchall()
-    out = []
-    for r in rows:
-        d = dict(r)
+    rows = db.store().query(q, (status,) if status else ())
+    for d in rows:
         for k in ("regions", "shared_systems", "detail"):
             d[k] = json.loads(d[k])
-        out.append(d)
-    return out
+    return rows
 
 
 if __name__ == "__main__":

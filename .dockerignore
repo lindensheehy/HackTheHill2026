@@ -1,0 +1,9 @@
+.git
+.env
+data
+legacy
+web/node_modules
+web/dist
+**/__pycache__
+.pytest_cache
+Northwind_Challenge_Data/*.csv

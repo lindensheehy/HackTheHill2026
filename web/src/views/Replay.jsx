@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts'
 import { api } from '../api.js'
-import { Card, Loading, Tip, Legend, axisProps } from '../components/common.jsx'
+import { Card, Loading, Tip, Legend, Provenance, axisProps } from '../components/common.jsx'
 import { pct, int, gbp, monthLabel } from '../format.js'
 
 const MONTH_MS = 1000   // one month per second
@@ -63,6 +63,11 @@ export default function Replay() {
         <div>
           <h2>Replay: what if we'd had the router?</h2>
           <div className="ink2">The last 6 months of real complaints ({int(d.total_complaints)}, Apr–Sep 2026) replayed through the router at one month per second.</div>
+          <div className="callout" style={{ marginTop: 10 }}>
+            <Provenance kind="assumption" />
+            <div className="small">This is a scenario, not a measured result. It applies the historical difference between transferred and non-transferred
+              complaints to the share of transfers you assume routing avoids. The transfer counts are real; the savings depend on the two sliders.</div>
+          </div>
         </div>
         <div className="row">
           <button className="btn primary" onClick={() => { if (t >= d.months.length) setT(0); setPlaying(!playing) }}>
@@ -87,7 +92,7 @@ export default function Replay() {
             Per transfer avoided: {gbp(per.gbp)} (Finance cost model: £121 vs £68), {per.days.toFixed(1)} days, {per.reopens.toFixed(3)} reopens, {per.breaches.toFixed(3)} breaches.
           </div>
         </Card>
-        <Card title="Annualised at these settings" sub={`${int(d.annual_transfers)} transfers in the last 12 months × ${pct(k)}`}>
+        <Card title="Annualised at these settings" sub={`${int(d.annual_transfers)} real transfers in the last 12 months × ${pct(k)} assumed avoided`} right={<Provenance kind="assumption" />}>
           <div className="grid g2" style={{ gap: 10 }}>
             <div><div style={{ fontSize: 26, fontWeight: 600 }}>{gbp(annual * per.gbp)}</div><div className="ink2 small">handling cost / yr</div></div>
             <div><div style={{ fontSize: 26, fontWeight: 600 }}>{int(annual * per.days)}</div><div className="ink2 small">complaint-days / yr</div></div>
@@ -106,7 +111,7 @@ export default function Replay() {
       </div>
 
       <div className="grid g-7-5">
-        <Card title="Cumulative transfers" right={<Legend items={[{ label: 'What happened', color: 'var(--s2)' }, { label: 'With the router', color: 'var(--s1)' }]} />}>
+        <Card title="Cumulative transfers" right={<Legend items={[{ label: 'What happened', color: 'var(--s2)' }, { label: 'Scenario: with the router', color: 'var(--s1)' }]} />}>
           <ResponsiveContainer width="100%" height={280}>
             <AreaChart data={chart} margin={{ top: 10, right: 20, bottom: 0, left: -10 }}>
               <CartesianGrid vertical={false} stroke="var(--grid)" />
@@ -115,7 +120,7 @@ export default function Replay() {
               <Tooltip content={({ active, payload }) => active && payload?.length && payload[0].payload.actual != null ? (
                 <Tip head={`Week of ${payload[0].payload.week}`} rows={[
                   { color: 'var(--s2)', label: 'What happened', value: int(payload[0].payload.actual) },
-                  { color: 'var(--s1)', label: 'With the router', value: int(payload[0].payload.routed) },
+                  { color: 'var(--s1)', label: 'Scenario: with the router', value: int(payload[0].payload.routed) },
                 ]} />) : null} />
               <Area dataKey="actual" stroke="var(--s2)" strokeWidth={2} fill="var(--s2)" fillOpacity={0.1} isAnimationActive={false} connectNulls={false} />
               <Area dataKey="routed" stroke="var(--s1)" strokeWidth={2} fill="var(--s1)" fillOpacity={0.1} isAnimationActive={false} connectNulls={false} />

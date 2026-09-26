@@ -1,5 +1,5 @@
 import React from 'react'
-import { Card } from './common.jsx'
+import { Card, Provenance } from './common.jsx'
 import { pct, num, gbp } from '../format.js'
 
 export default function TriageCard({ t, compact }) {
@@ -14,7 +14,7 @@ export default function TriageCard({ t, compact }) {
   return (
     <div className="stack" style={{ gap: 12 }}>
       <Card>
-        <div className="muted small">Route to</div>
+        <div className="row between"><span className="muted small">Route to</span><Provenance kind="policy" /></div>
         <div className="triage-owner">
           <span className="owner-team">{t.owner.team}</span>
           <span className="chip"><i className="dot" style={{ background: 'var(--s1)' }} />{t.owner.system}</span>
@@ -32,11 +32,12 @@ export default function TriageCard({ t, compact }) {
         )}
       </Card>
 
-      <Card title="Legacy route vs routed at intake" sub="From historical transferred vs non-transferred cases of the same category and priority">
+      <Card title="Legacy route vs non-transferred history" sub="What similar complaints did historically: an expectation, not a guarantee of what routing will achieve"
+        right={<Provenance kind="observed" />}>
         <div className="vs">
           <span className="h" />
           <span className="h" style={{ textAlign: 'right' }}><i className="dot" style={{ background: 'var(--s2)', marginRight: 5 }} />Legacy</span>
-          <span className="h" style={{ textAlign: 'right' }}><i className="dot" style={{ background: 'var(--s1)', marginRight: 5 }} />Routed</span>
+          <span className="h" style={{ textAlign: 'right' }}><i className="dot" style={{ background: 'var(--s1)', marginRight: 5 }} />Not transferred</span>
           {vs.map((v) => (
             <React.Fragment key={v.k}>
               <span className="ink2">{v.k}</span>
@@ -47,13 +48,13 @@ export default function TriageCard({ t, compact }) {
         </div>
         {risk > 0 && (
           <div className="small" style={{ marginTop: 10, color: 'var(--good-text)', fontWeight: 600 }}>
-            Saves ~{vs[0].f(vs[0].d)}, {vs[1].f(vs[1].d)} of breach risk and ~{gbp(vs[3].d)} per complaint on average
+            If routing avoids the transfer: ~{vs[0].f(vs[0].d)}, {vs[1].f(vs[1].d)} of breach risk and ~{gbp(vs[3].d)} less on average, based on history
           </div>
         )}
       </Card>
 
       <div className={compact ? 'stack' : 'grid g2'} style={{ gap: 12 }}>
-        <Card title="Likely resolution" sub="Share of similar non-transferred cases">
+        <Card title="Likely resolution" sub="Share of similar non-transferred cases" right={<Provenance kind="observed" />}>
           <div className="path">
             <span className="h muted small">Action</span><span /><span className="muted small" style={{ textAlign: 'right' }}>Median</span><span className="muted small" style={{ textAlign: 'right' }}>Reopen</span>
             {t.resolution_path.map((p) => (

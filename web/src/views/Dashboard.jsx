@@ -3,7 +3,7 @@ import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, ReferenceArea,
 } from 'recharts'
 import { api } from '../api.js'
-import { Card, Loading, Sparkline, Tip, Legend, axisProps } from '../components/common.jsx'
+import { Card, Loading, Sparkline, Tip, Legend, Provenance, axisProps } from '../components/common.jsx'
 import { pct, int, num, gbp, fmt, monthLabel } from '../format.js'
 import Alerts from './Alerts.jsx'
 import SystemGraph from './SystemGraph.jsx'
@@ -171,7 +171,7 @@ function TransferPanel({ t }) {
   const spread = t.spread_outside_casetrack
   return (
     <Card title="The transfer penalty" sub={`${pct(p.transfer_share)} of closed complaints were transferred between systems`}
-      right={<Legend square items={[{ label: 'Not transferred', color: 'var(--s1)' }, { label: 'Transferred', color: 'var(--s2)' }]} />}>
+      right={<div className="stack" style={{ gap: 4, alignItems: 'flex-end' }}><Provenance kind="observed" /><Legend square items={[{ label: 'Not transferred', color: 'var(--s1)' }, { label: 'Transferred', color: 'var(--s2)' }]} /></div>}>
       <div className="cmp">
         {rows.map((r) => {
           const max = Math.max(r.a, r.b)
@@ -199,7 +199,7 @@ function TransferPanel({ t }) {
       </div>
       <div className="callout info" style={{ marginTop: 14 }}>
         <div>
-          <b>It's where a complaint enters, not what it's about.</b> Outside CaseTrack, transfer rates sit between{' '}
+          <b>It's where a complaint enters, not what it's about.</b> CaseTrack has no <i>recorded</i> transfers (that doesn't prove there are no handoffs). Elsewhere, transfer rates sit between{' '}
           {pct(Math.min(...Object.values(spread).map((s) => s.min)))} and {pct(Math.max(...Object.values(spread).map((s) => s.max)))}{' '}
           across every category, channel, priority and region. All {int(t.slowest_1pct.n)} of the slowest 1% (over {t.slowest_1pct.threshold_days} days) were transfers.
         </div>
@@ -233,6 +233,10 @@ function RegionGrid({ regions }) {
               note={r.smart_meter_start !== r.smart_meter_penetration ? `from ${pct(r.smart_meter_start)}` : 'never rolled out'} />
             <Metric k="Billing exceptions / 1k / mo" v={num(r.exceptions_per_1k)} bar={r.exceptions_per_1k / max('exceptions_per_1k')} />
             <Metric k="Bill-correction value" v={pct(r.bill_correction_share)} note="share of total" />
+          </div>
+          <div className="row" style={{ marginTop: 12 }}>
+            <a className="btn sm" href={`#/queue?region=${encodeURIComponent(r.region)}`}>Open complaints ({int(r.open_now)}) →</a>
+            <a className="btn sm" href={`#/queue?region=${encodeURIComponent(r.region)}&priority=P1`}>P1 only</a>
           </div>
         </Card>
       ))}
@@ -292,8 +296,8 @@ function RouterImpact({ replay, transfer }) {
   const n = replay.annual_transfers * adoption * avoidance
   const per = replay.per_avoided
   return (
-    <Card title="#1 Route at intake" sub={`Annualised, at ${pct(adoption)} adoption and ${pct(avoidance)} of would-be transfers avoided (conservative)`}
-      right={<a href="#/replay" className="small">Run the replay →</a>}>
+    <Card title="#1 Route at intake" sub={`Scenario: annualised at ${pct(adoption)} adoption and ${pct(avoidance)} of would-be transfers avoided. Not a measured effect.`}
+      right={<div className="stack" style={{ gap: 4, alignItems: 'flex-end' }}><Provenance kind="assumption" /><a href="#/replay" className="small">Run the replay →</a></div>}>
       <div className="grid g2" style={{ gap: 12 }}>
         <Stat v={int(n)} k="transfers avoided / yr" />
         <Stat v={gbp(n * per.gbp)} k="handling cost saved" />
@@ -325,7 +329,7 @@ function InfoOnly({ tp }) {
   const cats = Object.entries(io.by_category)
   return (
     <Card title="#4 Auto-answer information-only complaints" sub="Talking point, with a stub lane in the triage queue"
-      right={<a href="#/queue/auto" className="small">See the lane →</a>}>
+      right={<div className="stack" style={{ gap: 4, alignItems: 'flex-end' }}><Provenance kind="observed" /><a href="#/queue/auto" className="small">See the lane →</a></div>}>
       <div className="grid g2" style={{ gap: 12 }}>
         <Stat v={pct(io.share)} k={`needed information only (~${int(io.per_year)} a year)`} />
         <Stat v={gbp(io.half_saving)} k="a year if half are auto-answered" />

@@ -18,6 +18,25 @@ export function Card({ title, sub, right, children, className = '', style }) {
   )
 }
 
+// Where a number or statement comes from. Always text plus a glyph, never colour alone.
+const PROVENANCE = {
+  observed: { label: 'Historical observation', glyph: '●', tip: 'Measured in Northwind’s historical data' },
+  policy: { label: 'Proposed policy', glyph: '◆', tip: 'A rule we propose or the app applies' },
+  assumption: { label: 'Assumption-based scenario', glyph: '△', tip: 'Depends on inputs we chose; not a measured effect' },
+  simulated: { label: 'Simulated', glyph: '◌', tip: 'Demo data injected on purpose' },
+  ai: { label: 'AI-generated', glyph: '✦', tip: 'Written by a language model from the cited evidence' },
+  template: { label: 'Template (AI off)', glyph: '▤', tip: 'Deterministic text from the same evidence' },
+}
+
+export function Provenance({ kind, text }) {
+  const p = PROVENANCE[kind] || PROVENANCE.observed
+  return (
+    <span className={`prov prov-${kind}`} title={p.tip}>
+      <span aria-hidden>{p.glyph}</span>{text || p.label}
+    </span>
+  )
+}
+
 export function Loading({ label = 'Loading…' }) {
   return <div className="spinner">{label}</div>
 }

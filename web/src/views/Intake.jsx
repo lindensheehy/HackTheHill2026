@@ -1,12 +1,14 @@
 import React, { useState } from 'react'
 import { api } from '../api.js'
 import { Card, Loading } from '../components/common.jsx'
+import { useSession } from '../session.js'
 import TriageCard from '../components/TriageCard.jsx'
 import { int } from '../format.js'
 
 const BLANK = { channel: 'Phone', category: 'Billing - disputed amount', priority: 'P3', region: 'Ashford', account_id: '', entry_system: '' }
 
 export default function Intake({ meta }) {
+  const { can } = useSession()
   const [form, setForm] = useState(BLANK)
   const [result, setResult] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -69,14 +71,15 @@ export default function Intake({ meta }) {
               <label className="field">Account (optional)
                 <input type="text" placeholder="ACC-000000" value={form.account_id} onChange={set('account_id')} />
               </label>
-              <button className="btn primary" disabled={busy}>{busy ? 'Routing…' : 'Route complaint'}</button>
+              <button className="btn primary" disabled={busy || !can('intake:create')} title={can('intake:create') ? '' : 'Your role can’t create complaints'}>
+                {busy ? 'Routing…' : 'Route complaint'}</button>
               {err && <div className="small" style={{ color: 'var(--critical)' }}>{err}</div>}
             </form>
           </Card>
           <Card title="Prepared examples">
             <div className="stack" style={{ gap: 8 }}>
               {meta.examples.map((ex) => (
-                <button key={ex.title} className="btn" style={{ textAlign: 'left', whiteSpace: 'normal' }} onClick={() => useExample(ex)} disabled={busy}>
+                <button key={ex.title} className="btn" style={{ textAlign: 'left', whiteSpace: 'normal' }} onClick={() => useExample(ex)} disabled={busy || !can('intake:create')}>
                   <div style={{ fontWeight: 600 }}>{ex.title}</div>
                   <div className="small ink2">{ex.blurb}</div>
                 </button>

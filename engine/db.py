@@ -1,4 +1,4 @@
-"""Data access. Source tables are read-only; everything we generate lives in data/app.db."""
+"""Data access. Source tables are read-only; everything we generate lives in the app store (engine/store.py)."""
 
 import json
 import sqlite3
@@ -10,7 +10,6 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parent.parent
 SOURCE_DB = ROOT / "Northwind_Challenge_Data" / "data.db"
-APP_DB = ROOT / "data" / "app.db"
 
 # Fixed "as of" date: the last day in the data, so ages and alerts are stable in the demo.
 AS_OF = date(2026, 9, 30)
@@ -18,35 +17,25 @@ AS_OF_TS = pd.Timestamp(AS_OF)
 
 CLOSED_STATUSES = ("Closed", "Closed - reopened")
 
-APP_SCHEMA = """
-CREATE TABLE IF NOT EXISTS baselines (kind TEXT, key TEXT, value TEXT, PRIMARY KEY (kind, key));
-CREATE TABLE IF NOT EXISTS alerts (
-    alert_id TEXT PRIMARY KEY, month TEXT, signal TEXT, category TEXT, regions TEXT,
-    z REAL, shared_systems TEXT, status TEXT, synthetic INTEGER, detail TEXT);
-CREATE TABLE IF NOT EXISTS case_events (
-    event_id INTEGER PRIMARY KEY AUTOINCREMENT, complaint_id TEXT, ts TEXT,
-    type TEXT, value TEXT, note TEXT);
-CREATE TABLE IF NOT EXISTS intake_complaints (
-    complaint_id TEXT PRIMARY KEY, date_opened TEXT, channel TEXT, category TEXT,
-    priority TEXT, region TEXT, source_system TEXT, account_id TEXT, sla_days INTEGER,
-    triage TEXT, created_ts TEXT);
-"""
+SOURCE_TABLES = ("northwind_complaints", "northwind_meter_reads", "northwind_monthly_kpis",
+                 "northwind_systems", "northwind_unit_costs", "northwind_ai_pilot_2025")
 
 
 def source_conn():
     return sqlite3.connect(SOURCE_DB.as_uri() + "?mode=ro", uri=True, check_same_thread=False)
 
 
-def app_conn():
-    APP_DB.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(APP_DB, check_same_thread=False)
-    conn.row_factory = sqlite3.Row
-    conn.executescript(APP_SCHEMA)
-    return conn
+def store():
+    from engine import store as _store
+    return _store.get()
 
 
 @lru_cache(maxsize=None)
 def _table(name):
+    """Source table: from Postgres if it has been imported there (jobs.import_source), else the read-only SQLite file."""
+    s = store()
+    if s.dialect == "postgres" and s.has_table(name):
+        return s.df(f'SELECT * FROM "{name}"')
     with source_conn() as conn:
         return pd.read_sql(f"SELECT * FROM {name}", conn)
 

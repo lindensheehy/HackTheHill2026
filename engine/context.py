@@ -8,9 +8,7 @@ from engine import db
 def all_complaints():
     """Source complaints plus anything created through the Intake Simulator."""
     src = db.complaints()
-    conn = db.app_conn()
-    new = pd.read_sql("SELECT * FROM intake_complaints", conn)
-    conn.close()
+    new = db.store().df("SELECT * FROM intake_complaints")
     if new.empty:
         src["from_intake"] = False
         return src

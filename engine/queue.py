@@ -19,15 +19,12 @@ AUTO_THRESHOLD = 0.45     # info-only likelihood needed to auto-answer
 AUTO_MAX_AGE = 14         # only fresh complaints are candidates
 AUTO_WATCH_DAYS = 7
 
-EVENT_TYPES = {"assign", "status", "note", "auto_bounce"}
+EVENT_TYPES = {"assign", "status", "note", "auto_bounce", "customer_help"}
 STATUSES = {"in_progress", "resolved", "escalated"}
 
 
 def _events():
-    conn = db.app_conn()
-    ev = pd.read_sql("SELECT * FROM case_events ORDER BY event_id", conn)
-    conn.close()
-    return ev
+    return db.store().df("SELECT * FROM case_events ORDER BY event_id")
 
 
 def _latest(ev, typ):
@@ -158,6 +155,7 @@ def case_detail(complaint_id):
         ids = list(in_queue["complaint_id"])
         case["rank"] = ids.index(complaint_id) + 1 if complaint_id in ids else None
         case["in_auto_lane"] = bool(row["in_auto_lane"])
+        case["watch_until"] = (pd.Timestamp(case["date_opened"]) + pd.Timedelta(days=AUTO_WATCH_DAYS)).strftime("%Y-%m-%d")
         case["auto_template"] = row["auto_template"] if row["in_auto_lane"] else None
 
     entry = row["source_system"]
@@ -187,7 +185,61 @@ def case_detail(complaint_id):
     if triage["context"]["region_alert_id"]:
         from jobs.detect_alerts import load_alerts
         alert = next((a for a in load_alerts() if a["alert_id"] == triage["context"]["region_alert_id"]), None)
-    return {"case": case, "triage": triage, "history": history, "events": events, "alert": alert}
+    summary = case_summary(case, triage, history, alert) if not case.get("closed") else None
+    return {"case": case, "triage": triage, "history": history, "events": events, "alert": alert, "summary": summary}
+
+
+FIELD_ACTIONS = {"Meter visit required", "Field repair required", "Appointment rebooked by agent"}
+
+
+def case_summary(case, triage, history, alert):
+    """The four questions an agent needs answered first, from deterministic rules (no model)."""
+    top = (triage["resolution_path"] or [{}])[0]
+    due = (pd.Timestamp(case["date_opened"]) + pd.Timedelta(days=int(case["sla_days"]))).strftime("%Y-%m-%d")
+    od = case["overdue_days"]
+    timing = f"{od} days past its {case['sla_days']}-day SLA" if od > 0 else (
+        "due today" if od == 0 else f"{-od} days left of its {case['sla_days']}-day SLA")
+    what = (f"{case['category']} complaint via {case['channel']} in {case['region']}, opened {case['date_opened']} "
+            f"({case['age_days']} days ago); {timing} (due {due}).")
+    if case["transferred_between_systems"]:
+        what += " It has already been transferred between systems."
+
+    status = case["workflow_status"]
+    action = top.get("action", "Review the complaint")
+    share = f"{top['share']:.0%} of similar cases" if top else "no history"
+    if case.get("in_auto_lane"):
+        nxt = f"No agent action: an automatic answer was sent; watching for a reply until {case.get('watch_until') or 'the 7-day window ends'}."
+    elif status == "escalated":
+        nxt = f"Senior review, then most likely '{action}' ({share})."
+    elif status == "in_progress":
+        nxt = f"Complete '{action}' ({share}) and confirm the outcome with the customer."
+    else:
+        med = f"; median {top['median_days']:.0f} days historically" if top else ""
+        nxt = f"Pick it up and start on '{action}' ({share}{med})."
+
+    blockers = []
+    if status == "escalated":
+        blockers.append("Escalated: waiting on a senior decision.")
+    if od > 0:
+        blockers.append(f"Past SLA by {od} days: counts against the regulator score.")
+    if case["transferred_between_systems"]:
+        blockers.append("Transferred between systems: CaseTrack loses history on transfer, so check the account history below.")
+    if action in FIELD_ACTIONS:
+        blockers.append("Likely needs a field visit: FieldForce has no link to CaseTrack, so attach the case history to the job.")
+    if alert:
+        blockers.append(f"Part of a regional pattern ({alert['detail']['summary']}): the investigation may explain the root cause.")
+    prior = len(history)
+    if prior:
+        blockers.append(f"Repeat complainant: {prior} earlier complaint{'s' if prior > 1 else ''} on this account.")
+    if not blockers:
+        blockers.append("Nothing blocking: ready to work.")
+    return {
+        "what_happened": what,
+        "next_action": nxt,
+        "owner": f"{case['owner_team']} in {triage['owner']['system']}",
+        "blockers": blockers,
+        "due_date": due,
+    }
 
 
 def add_event(complaint_id, typ, value=None, note=None):
@@ -195,34 +247,36 @@ def add_event(complaint_id, typ, value=None, note=None):
         raise ValueError(f"unknown event type {typ}")
     if typ == "status" and value not in STATUSES:
         raise ValueError(f"unknown status {value}")
-    conn = db.app_conn()
-    with conn:
-        conn.execute("INSERT INTO case_events (complaint_id, ts, type, value, note) VALUES (?,?,?,?,?)",
-                     (complaint_id, datetime.now().isoformat(timespec="seconds"), typ, value, note))
-    conn.close()
+    now = datetime.now().isoformat(timespec="seconds")
+    with db.store().transaction() as tx:
+        tx.execute("INSERT INTO case_events (complaint_id, ts, type, value, note) VALUES (?,?,?,?,?)",
+                   (complaint_id, now, typ, value, note))
+        if typ == "customer_help":
+            # The customer said the update didn't solve it: escalate so it rises in the queue.
+            tx.execute("INSERT INTO case_events (complaint_id, ts, type, value, note) VALUES (?,?,?,?,?)",
+                       (complaint_id, now, "status", "escalated", "Customer asked for more help after an update"))
 
 
-def _next_id(conn):
+def _next_id(tx):
     src_max = int(db.complaints()["complaint_id"].str[3:].astype(int).max())
-    row = conn.execute("SELECT MAX(CAST(SUBSTR(complaint_id, 4) AS INTEGER)) FROM intake_complaints").fetchone()
-    return f"NW-{max(src_max, row[0] or 0) + 1}"
+    rows = tx.query("SELECT MAX(CAST(SUBSTR(complaint_id, 4) AS INTEGER)) AS m FROM intake_complaints")
+    return f"NW-{max(src_max, rows[0]['m'] or 0) + 1}"
 
 
 def create_intake(intake):
     """Route a new complaint and add it to the queue. Returns the TriageResult."""
-    conn = db.app_conn()
-    cid = _next_id(conn)
+    store = db.store()
+    with store.transaction() as tx:
+        cid = _next_id(tx)
     intake = {**intake, "complaint_id": cid}
     intake["entry_system"] = intake.get("entry_system") or router.CHANNEL_ENTRY.get(intake["channel"], "SYS-05")
     triage = router.route_live(intake)
-    with conn:
-        conn.execute(
-            "INSERT INTO intake_complaints VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-            (cid, db.AS_OF.isoformat(), intake["channel"], intake["category"], intake["priority"],
-             intake["region"], "SYS-04", intake.get("account_id") or f"ACC-{900000 + int(cid[3:]) % 99999}",
-             router.SLA_DAYS[intake["priority"]], json.dumps(triage), datetime.now().isoformat(timespec="seconds")),
-        )
-    conn.close()
+    store.execute(
+        "INSERT INTO intake_complaints VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+        (cid, db.AS_OF.isoformat(), intake["channel"], intake["category"], intake["priority"],
+         intake["region"], "SYS-04", intake.get("account_id") or f"ACC-{900000 + int(cid[3:]) % 99999}",
+         router.SLA_DAYS[intake["priority"]], json.dumps(triage), datetime.now().isoformat(timespec="seconds")),
+    )
     scored = queue_score.rank(open_cases())
     pos = list(scored["complaint_id"]).index(cid) + 1 if cid in set(scored["complaint_id"]) else None
     triage["queue_rank"] = pos
@@ -232,10 +286,9 @@ def create_intake(intake):
 
 
 def reset_demo():
-    """Clear everything the demo created (intake complaints, events, simulated alerts)."""
-    conn = db.app_conn()
-    with conn:
-        conn.execute("DELETE FROM intake_complaints")
-        conn.execute("DELETE FROM case_events")
-        conn.execute("DELETE FROM alerts WHERE synthetic = 1")
-    conn.close()
+    """Clear everything the demo created (intake complaints, events, simulated alerts and signal points)."""
+    from jobs.detect_alerts import reset_scenario
+    with db.store().transaction() as tx:
+        tx.execute("DELETE FROM intake_complaints")
+        tx.execute("DELETE FROM case_events")
+    reset_scenario()

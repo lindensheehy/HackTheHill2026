@@ -1,0 +1,5 @@
+-r requirements.txt
+pytest
+httpx          # FastAPI TestClient
+pgserver       # embedded Postgres for tests/test_postgres.py
+playwright     # optional: UI smoke scripts against the installed Chrome

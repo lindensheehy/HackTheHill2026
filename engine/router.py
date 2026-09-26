@@ -125,8 +125,9 @@ def route(intake, tables, context=None):
     cost = {"routed": cost_model.cost("complaint"), "legacy": round(cost_model.expected_cost(transfer_risk), 2)}
     if transfer_risk > 0:
         reasons.append(
-            f"Routing at intake saves ~{expected_days['legacy'] - expected_days['routed']:.1f} days "
-            f"and ~£{cost['legacy'] - cost['routed']:.0f} on average for this category and priority"
+            f"Historically, non-transferred cases of this category and priority closed "
+            f"~{expected_days['legacy'] - expected_days['routed']:.1f} days sooner and cost ~£{cost['legacy'] - cost['routed']:.0f} "
+            f"less than this entry route's blend; an expectation, not a guarantee"
         )
 
     # 5. Context

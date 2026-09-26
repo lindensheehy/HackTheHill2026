@@ -1,6 +1,8 @@
+# Core (all open source)
 fastapi
 uvicorn
 pandas
 numpy
-pytest
-httpx
+# Optional integrations, all open-source client libraries
+psycopg[binary]      # PostgreSQL / Tiger Cloud storage (DATABASE_URL)
+pyjwt[crypto]        # OIDC token verification (AUTH_ENABLED)

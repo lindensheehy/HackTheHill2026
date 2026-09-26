@@ -1,0 +1,21 @@
+# Vultr (or any Docker host): `docker compose up -d --build`
+services:
+  app:
+    build: .
+    env_file: .env
+    volumes:
+      - appdata:/app/data          # SQLite store, TTS cache (unused when DATABASE_URL points at Tiger Cloud)
+    restart: unless-stopped
+  caddy:
+    image: caddy:2
+    ports: ["80:80", "443:443"]
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on: [app]
+    restart: unless-stopped
+volumes:
+  appdata: {}
+  caddy_data: {}

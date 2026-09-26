@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react'
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ScatterChart, Scatter, ReferenceLine,
 } from 'recharts'
-import { Card, Tip, Legend, axisProps } from '../components/common.jsx'
+import { Card, Tip, Legend, Provenance, axisProps } from '../components/common.jsx'
 import { pct, int, gbp, num } from '../format.js'
 
 const FOCUS = ['Barrowdale', 'Dunmoor']
@@ -47,7 +47,8 @@ export default function SmartMeter({ s }) {
 
   return (
     <Card title="#6 Smart meters: buy them in Barrowdale and Dunmoor"
-      sub="Talking point with a projection. Everything except the unit costs is an estimate; the exception-handling cost is the number to ask Northwind for.">
+      sub="Talking point with a projection. Everything except the unit costs is an estimate; the exception-handling cost is the number to ask Northwind for."
+      right={<Provenance kind="assumption" />}>
       <div className="grid g-7-5">
         <div>
           <div className="grid g3" style={{ gap: 14, marginBottom: 12 }}>

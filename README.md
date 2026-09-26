@@ -1,7 +1,9 @@
 # Northwind Complaint Triage
 
 Implementation of [plan.md](plan.md): an intake router, an operations dashboard and a ranked triage queue over the
-Northwind challenge data. It uses explainable statistics only, with no LLM.
+Northwind challenge data. Routing and prioritisation use explainable rules. Optional AI (Gemini) only helps people read
+the evidence, and never decides. Sponsor integrations are described in [plan_integrations.md](plan_integrations.md) and set up
+via [deploy/SETUP.md](deploy/SETUP.md). With no `.env`, everything runs on open-source components only.
 
 ## Run it
 
@@ -14,7 +16,8 @@ python -m uvicorn api.main:app --port 8000
 
 Open http://127.0.0.1:8000. For front-end development, run `npm run dev` in `web/` (port 5173, proxies `/api` to 8000).
 
-Tests: `python -m pytest tests`
+Tests: `pip install -r requirements-dev.txt` then `python -m pytest tests` (40 tests; external services are mocked; Postgres runs embedded).
+Deploy: `docker compose up -d --build` (Vultr + Caddy TLS; see deploy/SETUP.md). LLM-oriented specs live in [docs/](docs/README.md).
 
 ## Layout
 

@@ -154,14 +154,12 @@ def build():
         "region_signals": region_signals(),
         "global": {"transfer_penalty": cost_model.transfer_penalty(), "as_of": str(db.AS_OF)},
     }
-    conn = db.app_conn()
-    with conn:
-        conn.execute("DELETE FROM baselines")
-        conn.executemany(
+    with db.store().transaction() as tx:
+        tx.execute("DELETE FROM baselines")
+        tx.executemany(
             "INSERT INTO baselines (kind, key, value) VALUES (?, ?, ?)",
             [(kind, key, db.dumps(val)) for kind, t in tables.items() for key, val in t.items()],
         )
-    conn.close()
     load.cache_clear()
     return tables
 
@@ -172,9 +170,7 @@ _cache = {}
 def load():
     """kind -> {key: value}. Builds the table on first use if it's empty."""
     if "tables" not in _cache:
-        conn = db.app_conn()
-        rows = conn.execute("SELECT kind, key, value FROM baselines").fetchall()
-        conn.close()
+        rows = db.store().query("SELECT kind, key, value FROM baselines")
         if not rows:
             _cache["tables"] = build()
         else:

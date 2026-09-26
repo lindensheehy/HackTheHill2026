@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from 'react'
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine } from 'recharts'
 import { api } from '../api.js'
-import { Card, Loading, Tip, Legend, Pri, Overdue, axisProps } from '../components/common.jsx'
+import { Card, Loading, Tip, Legend, Pri, Overdue, Provenance, axisProps } from '../components/common.jsx'
+import { useSession } from '../session.js'
 import { num, int, monthLabel } from '../format.js'
 
 const SERIES = ['var(--s1)', 'var(--s2)', 'var(--s3)']
 
 export default function Alerts({ onChanged, initial }) {
+  const { can } = useSession()
   const [alerts, setAlerts] = useState(null)
+  const [feed, setFeed] = useState(null)
   const [scenario, setScenario] = useState(null)
   const [showHistory, setShowHistory] = useState(false)
   const [sel, setSel] = useState(initial || null)
@@ -16,6 +19,7 @@ export default function Alerts({ onChanged, initial }) {
   const load = () => api.alerts().then((d) => {
     setAlerts(d.alerts)
     setScenario(d.scenario)
+    setFeed({ ...d.feed, store: d.store })
     const top = d.alerts.filter((a) => a.status === 'active').sort((a, b) => b.z - a.z)[0]
     setSel((cur) => cur || top?.alert_id || null)
   })
@@ -23,7 +27,8 @@ export default function Alerts({ onChanged, initial }) {
 
   const inject = async () => {
     setBusy(true)
-    const r = await api.inject()
+    let r
+    try { r = await api.inject() } catch (e) { setBusy(false); alert(e.message); return }
     await load()
     const top = [...r.alerts].sort((a, b) => b.z - a.z)[0]
     setSel(top?.alert_id)
@@ -48,9 +53,12 @@ export default function Alerts({ onChanged, initial }) {
       <Card title={`Alerts feed · ${active.length} active`}
         sub={`${history.length} historical alerts over two years (z ≥ 3 or CUSUM drift)`}
         right={<div className="row">
-          {hasSim ? <button className="btn sm" onClick={reset}>Clear simulation</button>
-            : <button className="btn sm primary" onClick={inject} disabled={busy}>{busy ? 'Detecting…' : 'Inject scenario'}</button>}
+          {hasSim ? <button className="btn sm" onClick={reset} disabled={!can('alerts:simulate')}>Clear simulation</button>
+            : <button className="btn sm primary" onClick={inject} disabled={busy || !can('alerts:simulate')}
+              title={can('alerts:simulate') ? 'Writes a simulated month into the signal feed, then runs detection' : 'Needs the analyst role'}>
+              {busy ? 'Detecting…' : 'Inject scenario'}</button>}
         </div>}>
+        {feed?.store && <FeedBadge feed={feed} />}
         {!hasSim && scenario && (
           <div className="callout info small" style={{ marginBottom: 10 }}>
             <div><b>Simulated feed:</b> {scenario.description} The same detector that runs on real data will pick it up.</div>
@@ -65,7 +73,7 @@ export default function Alerts({ onChanged, initial }) {
               <div className="sev" style={{ background: a.status === 'active' ? (a.z >= 5 ? 'var(--critical)' : 'var(--serious)') : 'var(--axis)' }} />
               <div style={{ minWidth: 0 }}>
                 <div className="row" style={{ gap: 6 }}>
-                  {a.synthetic ? <span className="sim-tag">simulated</span> : null}
+                  {a.synthetic ? <Provenance kind="simulated" /> : <Provenance kind="observed" text="Real data" />}
                   <span className="muted small">{monthLabel(a.month)} · {a.detail.method === 'cusum' ? 'CUSUM drift' : `z = ${num(a.z)}`}</span>
                 </div>
                 <div style={{ fontWeight: a.status === 'active' ? 600 : 400 }}>{a.detail.summary}</div>
@@ -86,9 +94,22 @@ export default function Alerts({ onChanged, initial }) {
   )
 }
 
+function FeedBadge({ feed }) {
+  const st = feed.store
+  const where = st.backend === 'postgres' ? `${st.host}${st.timescale ? ' · TimescaleDB hypertable' : ''}` : 'SQLite (local)'
+  const n = (k) => feed[k]?.points || 0
+  return (
+    <div className="feed-badge small" title="Detection reads this stored time-series feed">
+      <b>Signal feed:</b> {int(n('derived'))} points from history{n('ingest') ? ` · ${int(n('ingest'))} ingested live` : ''}
+      {n('simulated') ? ` · ${int(n('simulated'))} simulated` : ''} · stored in <b>{where}</b>
+    </div>
+  )
+}
+
 function Investigation({ id }) {
+  const { setFocus } = useSession()
   const [d, setD] = useState(null)
-  useEffect(() => { api.alert(id).then(setD).catch(() => setD(false)) }, [id])
+  useEffect(() => { api.alert(id).then(setD).catch(() => setD(false)); setFocus({ alert_id: id }) }, [id])
   if (d === false) return <Card title="Investigation"><div className="empty">Alert no longer exists.</div></Card>
   if (!d) return <Card title="Investigation"><Loading /></Card>
   const a = d.alert
@@ -103,7 +124,7 @@ function Investigation({ id }) {
   const f = (v) => (v == null ? '–' : isRate ? `${(v * 100).toFixed(1)}%` : num(v, a.signal.startsWith('complaints') ? 0 : 1))
   return (
     <Card title="Investigation" sub={a.detail.label}
-      right={a.synthetic ? <span className="sim-tag">simulated</span> : <span className="muted small">{a.status}</span>}>
+      right={a.synthetic ? <Provenance kind="simulated" /> : <Provenance kind="observed" text={`Real data · ${a.status}`} />}>
       <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 10 }}>{a.detail.summary}</div>
       <div className="row between">
         <h4>{a.detail.label}, last 12 months</h4>
@@ -132,6 +153,7 @@ function Investigation({ id }) {
           ))}
         </tbody>
       </table></div>
+      <Brief alert={a} />
       {a.shared_systems.length > 0 && (
         <>
           <h4 style={{ margin: '14px 0 6px' }}>Systems all affected regions share</h4>
@@ -156,5 +178,55 @@ function Investigation({ id }) {
         </table></div>
       )}
     </Card>
+  )
+}
+
+function Brief({ alert }) {
+  const { can, config } = useSession()
+  const [b, setB] = useState(null)
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState(null)
+  const [showEv, setShowEv] = useState(false)
+  const run = async (force) => {
+    setBusy(true); setErr(null)
+    try { setB(await api.brief(alert.alert_id, force)) } catch (e) { setErr(e.message) }
+    setBusy(false)
+  }
+  const ev = (id) => b?.evidence.find((e) => e.id === id)
+  const SECTIONS = [['what_changed', 'What changed'], ['possible_explanations', 'Possible explanations (hypotheses)'], ['check_next', 'What to check next']]
+  return (
+    <div className="brief">
+      <div className="row between">
+        <h4>Investigation brief</h4>
+        {b ? <span className="row" style={{ gap: 6 }}>
+          <Provenance kind={b.mode === 'gemini' ? 'ai' : 'template'} />
+          {b.cached && <span className="small muted">cached</span>}
+          {b.mode === 'gemini' && <button className="btn sm" onClick={() => run(true)} disabled={busy}>Regenerate</button>}
+        </span> : (
+          <button className="btn sm primary" onClick={() => run(false)} disabled={busy || !can('assistant:use')}>
+            {busy ? 'Writing…' : config?.ai?.gemini ? 'Generate brief (Gemini)' : 'Generate brief'}
+          </button>
+        )}
+      </div>
+      {err && <div className="small" style={{ color: 'var(--critical)' }}>{err}</div>}
+      {!b && !err && <div className="small muted">Turns the numbers below into three short sections. Every bullet cites the evidence it rests on; uncited claims are dropped.</div>}
+      {b && (
+        <>
+          {SECTIONS.map(([k, label]) => b[k]?.length > 0 && (
+            <div key={k} style={{ marginTop: 8 }}>
+              <div className="small ink2" style={{ fontWeight: 600 }}>{label}</div>
+              <ul className="reasons">
+                {b[k].map((x, i) => (
+                  <li key={i}>{x.text} {x.cites.map((c) => <span key={c} className="chip cite" title={ev(c)?.text}>{c}</span>)}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
+          {b.note && <div className="small muted">{b.note}</div>}
+          <button className="btn sm" style={{ marginTop: 6 }} onClick={() => setShowEv(!showEv)}>{showEv ? 'Hide' : 'Show'} evidence ({b.evidence.length})</button>
+          {showEv && <ol className="evidence-list small">{b.evidence.map((e) => <li key={e.id}><b>{e.id}</b> {e.text}</li>)}</ol>}
+        </>
+      )}
+    </div>
   )
 }

@@ -1,0 +1,5 @@
+# Automatic HTTPS for the domain (GoDaddy Registry DNS A record -> this server's IP).
+{$DOMAIN:localhost} {
+	encode gzip
+	reverse_proxy app:8000
+}
