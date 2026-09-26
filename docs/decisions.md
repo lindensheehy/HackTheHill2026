@@ -3,7 +3,10 @@
 ## Deviations from plan.md (intentional; keep unless the user says otherwise)
 | Plan | Implemented | Why |
 |---|---|---|
-| `data/data.db` holds source + app tables | Source is `Northwind_Challenge_Data/data.db` (read-only); app tables in `data/app.db` | Keeps the source immutable; the app DB can be rebuilt |
+| `data/data.db` holds source + app tables | Source is `Northwind_Challenge_Data/data.db` (read-only); app tables in the app store (`data/app.db`, or Postgres via `DATABASE_URL`) | Keeps the source immutable; the app store can be rebuilt |
+| "No LLM" pitch | "Routing and prioritisation use explainable rules; optional AI (Gemini) helps people read the evidence and never decides" | Adding the Gemini assistant (plan_integrations.md) |
+| Replay and triage card show router "savings" / "Routed" | Replay is an "assumption-based scenario"; the card compares Legacy with "Not transferred" history; router reasons never say "saves"; CaseTrack has "no *recorded* transfers" | Historical differences aren't a measured effect of routing (external review) |
+| Alerts computed from an in-memory panel | Detection reads the stored `signal_points` feed (derived / ingest / simulated) | Makes the database part of the demonstrated workflow (Tiger Data) and enables live ingestion |
 | score (breached) = w·overdue_ratio; imminence = 1 − days_left/sla | breached: w·(1+ratio); imminence = 1 − days_left/20 | The plan's version drops from ~0.86 to ~0.05 at the deadline, and scores every fresh case 0 (a new P1 tied a new P3) |
 | Alert z ≥ 2 | z ≥ 3, Poisson sd floor, lift ≥ 1.3, count ≥ 10; CUSUM fires once per region | z ≥ 2 gave ~60 alerts from ~1,500 tests (noise). The scenario still fires at z = 5–13 |
 | breach_risk = historical rate | Kaplan-Meier P(breach \| open at age), last 12 months, open cases censored | Honest under censoring and current performance |
@@ -57,4 +60,5 @@
 - New alert signal: emit rows in `build_panel()`, map it in `SIGNAL_CATEGORY` if it relates to complaint categories, add a label in `signal_label`.
 - New endpoint: thin wrapper in api/main.py over an engine function that returns JSON-able dicts (use `queue.rows()` for frames: it converts NaN→None and formats dates).
 - New view: add it to `TABS` in App.jsx, create views/X.jsx, use Card/Tip/Legend/axisProps and the tokens. Rebuild `web/dist` for the FastAPI-served version.
-- Any generated state goes in app.db through `db.app_conn()`, and `queue.reset_demo()` should clear demo-created state.
+- Any generated state goes in the app store through `db.store()` (portable SQL; add the table to `store._COMMON`), and `queue.reset_demo()` should clear demo-created state.
+- New sponsor or paid service: read its key in `engine/config.py`, gate spending with `usage.check`/`usage.add` (add a LIMITS entry), cache results, give it a FOSS fallback, catch every error in the calling path, surface status in `/api/config`, guard the endpoint with a permission, and mock it in tests (never call real services from tests).

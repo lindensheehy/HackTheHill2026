@@ -45,7 +45,7 @@ intake: channel, category, priority, region, optional account_id, entry_system, 
    - Otherwise TEAM_SYSTEMS: Payments→02; Field→08; Customer Relations→14; Network→09,08; Water→10,08.
 3. **transfer_risk** = 0 if entry is SYS-04, else transfer_rate[entry].rate (~0.46).
 4. **resolution_path**: top 3 of `cat|pri` (fallback `cat|*`). **info_only_likelihood** from `cat|channel` (fallback `cat|*`).
-5. **Routed vs legacy**:
+5. **Routed vs legacy.** The JSON key `routed` is kept for compatibility, but it means *non-transferred history*: an expectation, not a promise. The UI labels it "Not transferred".
    - routed = outcomes[cat|pri|0].
    - legacy = risk·outcomes[…|1] + (1−risk)·outcomes[…|0], applied to mean_days, breach and reopen.
    - cost: routed £68; legacy expected_cost(risk). Invariant: routed ≤ legacy.

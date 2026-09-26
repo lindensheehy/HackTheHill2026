@@ -4,7 +4,7 @@ Northwind Complaint Triage: hackathon app over a synthetic utility-complaints da
 the biggest fixable cause is **transfers between systems**, which depend only on the **entry system**, so route every complaint
 once at intake. Three components: **Routing Engine (#1)**, **Operations Dashboard (#3)** and **Triage Queue (#2)**. Two talking points
 are stubbed: **#4 auto-answer information-only complaints** and **#6 smart meters for Barrowdale + Dunmoor**. #5 (integration layer) is dropped.
-No LLM in any decision; every number shown has a plain-English reason. Optional sponsor adapters (Gemini assistant, ElevenLabs voice, Tiger Data/Postgres storage, Auth0 login, Vultr deploy) sit outside the core. Source plans: `/plan.md` (product), `/plan_integrations.md` (sponsor decisions + costs). `/README.md` = run steps; `/deploy/SETUP.md` = service setup.
+No LLM in any decision; every number shown has a plain-English reason. Optional sponsor adapters (Gemini assistant, ElevenLabs voice, Tiger Data/Postgres storage, Auth0 login, Vultr deploy) sit outside the core. Source plans: `/plan.md` (product), `/plan_integrations.md` (sponsor decisions + costs). `/README.md` = run steps; `/deploy/SETUP.md` = service setup; **`/todo.md` = everything still stubbed, mocked or unverified.**
 
 | Doc | Read when |
 |---|---|
