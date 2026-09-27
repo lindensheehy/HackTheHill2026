@@ -7,6 +7,7 @@ import Queue from './views/Queue.jsx'
 import Intake from './views/Intake.jsx'
 import Replay from './views/Replay.jsx'
 import Assistant from './components/Assistant.jsx'
+import useCardGlow from './useCardGlow.js'
 
 const TABS = [
   { id: 'dashboard', label: 'Operations' },
@@ -42,6 +43,7 @@ export const go = (tab, arg, params) => {
 }
 
 export default function App() {
+  useCardGlow()
   const [boot, setBoot] = useState({ state: 'loading' })
   useEffect(() => {
     (async () => {

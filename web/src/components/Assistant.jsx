@@ -110,7 +110,7 @@ function Message({ m, voiceProvider, fallback }) {
   const clean = m.text.replace(/\s*\[([ECA]\d+)\]/g, ' [$1]')
   const read = () => {
     const plain = m.text.replace(/\[[ECA]\d+\]/g, '').replace(/[-*]\s/g, '')
-    const provider = plain.length <= 600 ? voiceProvider : 'browser'
+    const provider = voiceProvider
     setVoiceErr(null)
     speak(plain, { provider, fetchAudio: () => api.tts(plain), fallback }).then((r) => setVoiceErr(r.error || null))
   }

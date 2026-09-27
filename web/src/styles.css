@@ -328,3 +328,56 @@ tr.cursor td:first-child { box-shadow: inset 3px 0 0 var(--s1), inset 0 1px 0 va
 .evidence { margin-top: 6px; font-size: 12px; color: var(--ink-2); background: var(--surface-2); padding: 6px 8px; border-radius: 6px; }
 .login { min-height: 100vh; display: grid; place-items: center; padding: 16px; }
 @media (max-width: 700px) { .assistant { right: 16px; bottom: 70px; } .assistant-fab { right: 16px; bottom: 16px; } }
+
+
+/* ---- Cursor spotlight on cards ---- */
+
+@media (hover: hover) and (pointer: fine) and
+       (prefers-reduced-motion: no-preference) {
+
+  :is(.card, .region-card, .region-item, .glow-card) {
+    position: relative;
+
+    /* Defaults also prevent nested cards inheriting another card's glow. */
+    --nw-glow: 0;
+    --nw-x: -1000px;
+    --nw-y: -1000px;
+
+    /* Background glow sits behind the card's content. */
+    background-image: radial-gradient(
+      circle 320px at var(--nw-x) var(--nw-y),
+      rgba(57, 135, 229, calc(var(--nw-glow) * 0.14)),
+      transparent 100%
+    );
+  }
+
+  :is(.card, .region-card, .region-item, .glow-card)::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    pointer-events: none;
+    z-index: 1;
+
+    /* Brighter light along the border. */
+    background: radial-gradient(
+      circle 240px at var(--nw-x) var(--nw-y),
+      rgba(129, 170, 255, 0.95),
+      transparent 100%
+    );
+
+    /* Show only the thin border, leaving the centre transparent. */
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+
+    opacity: var(--nw-glow);
+    transition: opacity 180ms ease;
+  }
+}
