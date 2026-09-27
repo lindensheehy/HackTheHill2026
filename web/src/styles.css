@@ -311,6 +311,41 @@ tr.cursor td:first-child { box-shadow: inset 3px 0 0 var(--s1), inset 0 1px 0 va
 .chip.cite { cursor: pointer; border: 1px solid var(--border); font-variant-numeric: tabular-nums; padding: 0 6px; font-size: 11px; }
 .chip.cite.on { background: var(--accent-wash); color: var(--ink); }
 
+/* ---- Region Grid & Hover Effects ---- */
+.regions-grid,
+.regions-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.region-card,
+.region-item {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.region-card:hover,
+.region-item:hover {
+  transform: translateY(-3px) scale(1.01);
+  border-color: var(--s1);
+  background-color: var(--surface-2);
+  box-shadow: 0 8px 24px var(--accent-wash), var(--shadow);
+}
+
+.region-card:active,
+.region-item:active {
+  transform: translateY(-1px) scale(1);
+}
+
 /* ---- Assistant ---- */
 .assistant-fab {
   position: fixed; right: 20px; bottom: 20px; z-index: 50; border: 0; border-radius: 999px; padding: 12px 18px;
