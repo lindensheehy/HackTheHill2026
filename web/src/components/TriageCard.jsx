@@ -11,6 +11,7 @@ export default function TriageCard({ t, compact }) {
     { k: 'Handling cost', r: gbp(t.cost.routed), l: gbp(t.cost.legacy), d: t.cost.legacy - t.cost.routed, f: gbp },
   ]
   const maxShare = Math.max(...t.resolution_path.map((p) => p.share))
+
   return (
     <div className="stack" style={{ gap: 12 }}>
       <Card>
@@ -25,7 +26,7 @@ export default function TriageCard({ t, compact }) {
           {risk > 0 ? <> , {pct(risk)} chance of a transfer</> : ' (no transfer risk)'}
         </div>
         {t.context.region_alert && (
-          <div className="callout" style={{ marginTop: 10, borderColor: 'var(--critical)' }}>
+          <div className="callout region-card" style={{ marginTop: 10, borderColor: 'var(--critical)' }}>
             <span style={{ color: 'var(--critical)', fontWeight: 700 }}>⚠</span>
             <div><b>Regional alert.</b> {t.context.region_alert}</div>
           </div>
@@ -76,12 +77,20 @@ export default function TriageCard({ t, compact }) {
             {t.info_only_likelihood >= 0.45 && <span className="small ink2">auto-answer candidate</span>}
           </div>
         </Card>
+
         <Card title="Why" sub="Every number above, in words">
           <ul className="reasons">{t.reasons.map((r, i) => <li key={i}>{r}</li>)}</ul>
+          {/* Region metadata block with hover interactions */}
           <div className="row" style={{ marginTop: 10 }}>
-            {t.context.region_systems.map((s) => <span className="chip" key={s}>{s}</span>)}
+            {t.context.region_systems.map((s) => (
+              <span className="chip region-item" key={s}>
+                {s}
+              </span>
+            ))}
             {t.context.region_signals?.estimated_read_rate != null && (
-              <span className="chip">{pct(t.context.region_signals.estimated_read_rate)} est. reads · {pct(t.context.region_signals.smart_meter_penetration)} smart</span>
+              <span className="chip region-item">
+                {pct(t.context.region_signals.estimated_read_rate)} est. reads · {pct(t.context.region_signals.smart_meter_penetration)} smart
+              </span>
             )}
           </div>
         </Card>
