@@ -7,19 +7,20 @@ import { speak, stopSpeaking } from '../speech.js'
 // What the customer would hear and read. The text is a fixed template filled from the live case state,
 // so it changes as soon as an agent changes the status. No model writes it.
 export default function CustomerUpdate({ id, version, onHelp }) {
-  const { can } = useSession()
+  const { can, config } = useSession()
   const [u, setU] = useState(null)
   const [playing, setPlaying] = useState(false)
-  const [used, setUsed] = useState(null)
+  const [result, setResult] = useState(null)
   useEffect(() => { api.customerUpdate(id).then(setU).catch(() => setU(false)); return stopSpeaking }, [id, version])
   if (u === false) return null
 
   const play = async () => {
     if (playing) { stopSpeaking(); setPlaying(false); return }
     setPlaying(true)
-    const how = await speak(u.text, { provider: u.provider, fetchAudio: () => api.customerUpdateAudio(id), onEnd: () => setPlaying(false) })
-    setUsed(how)
-    if (how === 'none') setPlaying(false)
+    const r = await speak(u.text, { provider: u.provider, fetchAudio: () => api.customerUpdateAudio(id),
+      onEnd: () => setPlaying(false), fallback: config?.voice?.browser_fallback !== false })
+    setResult(r)
+    if (r.engine === 'none') setPlaying(false)
   }
 
   return (
@@ -31,10 +32,16 @@ export default function CustomerUpdate({ id, version, onHelp }) {
             <button className="btn sm" disabled={!can('cases:write')} title={can('cases:write') ? '' : 'Needs the cases:write permission'}
               onClick={onHelp}>I still need help</button>
             <span className="small muted">
-              Voice: {u.provider === 'elevenlabs' ? 'ElevenLabs' : 'browser (ElevenLabs not configured)'}
-              {used && used !== u.provider ? ` · played with ${used}` : ''}
+              Voice: {u.provider === 'elevenlabs' ? 'ElevenLabs' : 'browser (ElevenLabs not configured on the server)'}
             </span>
           </div>
+          {result?.error && (
+            <div className="callout small" role="status" style={{ marginBottom: 8, borderColor: 'var(--serious)' }}>
+              <div>
+                <b>ElevenLabs didn’t play{result.engine === 'browser' ? ', so the browser voice was used' : ''}.</b> {result.error}
+              </div>
+            </div>
+          )}
           <blockquote className="transcript">{u.text}</blockquote>
           <div className="small muted">Never promises repair dates or says a case is resolved unless an agent resolved it.</div>
         </>

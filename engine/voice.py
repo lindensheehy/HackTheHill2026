@@ -108,6 +108,25 @@ def synthesize(text):
     if path.exists():
         return path.read_bytes(), True
     usage.check("elevenlabs", len(text))
+    audio = request_tts(text)
+    usage.add("elevenlabs", len(text))
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(audio)
+    return audio, False
+
+
+HINTS = {
+    "invalid_api_key": "ELEVENLABS_API_KEY is wrong or was deleted. Create a new key in ElevenLabs → Developers → API Keys.",
+    "missing_permissions": "The API key is restricted. Edit it in ElevenLabs → Developers → API Keys and enable Text to Speech (and Voices: read).",
+    "quota_exceeded": "The ElevenLabs account is out of credits. Redeem the Hack the Hill Creator code or check Subscription.",
+    "voice_not_found": "ELEVENLABS_VOICE_ID isn't available to this account. Pick a voice in the Voice Library and copy its ID.",
+    "detected_unusual_activity": "ElevenLabs blocked free-tier API use from this network (common on VPNs and cloud servers). Upgrade (e.g. the Creator code) or use another network.",
+    "model_not_found": "ELEVENLABS_MODEL isn't a valid model ID. Use eleven_flash_v2_5.",
+}
+
+
+def request_tts(text):
+    """One raw ElevenLabs call (no cache, no budget). Raises RuntimeError with a readable reason."""
     req = urllib.request.Request(
         TTS_URL.format(voice=config.ELEVENLABS_VOICE_ID, fmt=config.ELEVENLABS_OUTPUT_FORMAT),
         data=json.dumps({"text": text, "model_id": config.ELEVENLABS_MODEL}).encode(),
@@ -115,15 +134,29 @@ def synthesize(text):
         method="POST")
     try:
         with urllib.request.urlopen(req, timeout=30) as r:
-            audio = r.read()
+            return r.read()
     except urllib.error.HTTPError as e:
-        raise RuntimeError(f"ElevenLabs HTTP {e.code}: {e.read().decode(errors='ignore')[:200]}") from None
-    usage.add("elevenlabs", len(text))
-    CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    path.write_bytes(audio)
-    return audio, False
+        raise RuntimeError(explain_error(e.code, e.read().decode(errors="ignore"))) from None
+    except (urllib.error.URLError, OSError) as e:  # DNS, firewall, proxy, timeout
+        raise RuntimeError(f"Can't reach api.elevenlabs.io ({getattr(e, 'reason', e)}). Check the internet connection or firewall.") from None
+
+
+def explain_error(code, body):
+    """Turn an ElevenLabs error response into one readable line (status + message + what to do)."""
+    status, message = "", body[:200]
+    try:
+        detail = json.loads(body).get("detail")
+        if isinstance(detail, dict):
+            status, message = detail.get("status", "") or detail.get("code", ""), detail.get("message", message)
+        elif isinstance(detail, str):
+            message = detail
+    except (ValueError, AttributeError):
+        pass
+    hint = HINTS.get(status) or ("The API key was rejected." if code == 401 else "")
+    return f"ElevenLabs HTTP {code}{f' {status}' if status else ''}: {message}" + (f" → {hint}" if hint else "")
 
 
 def status():
     return {"elevenlabs": elevenlabs_enabled(), "model": config.ELEVENLABS_MODEL if elevenlabs_enabled() else None,
-            "max_chars_per_request": config.ELEVENLABS_MAX_CHARS_PER_REQUEST}
+            "max_chars_per_request": config.ELEVENLABS_MAX_CHARS_PER_REQUEST,
+            "browser_fallback": config.VOICE_BROWSER_FALLBACK}

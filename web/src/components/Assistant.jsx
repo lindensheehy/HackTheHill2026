@@ -84,7 +84,7 @@ export default function Assistant({ page }) {
                 ))}
               </div>
             )}
-            {msgs.map((m, i) => <Message key={i} m={m} voiceProvider={voiceProvider} />)}
+            {msgs.map((m, i) => <Message key={i} m={m} voiceProvider={voiceProvider} fallback={config.voice?.browser_fallback !== false} />)}
             {busy && <div className="small muted">Thinking…</div>}
             <div ref={endRef} />
           </div>
@@ -103,14 +103,16 @@ export default function Assistant({ page }) {
   )
 }
 
-function Message({ m, voiceProvider }) {
+function Message({ m, voiceProvider, fallback }) {
   const [openEv, setOpenEv] = useState(null)
+  const [voiceErr, setVoiceErr] = useState(null)
   if (m.role === 'user') return <div className="msg user">{m.text}</div>
   const clean = m.text.replace(/\s*\[([ECA]\d+)\]/g, ' [$1]')
   const read = () => {
     const plain = m.text.replace(/\[[ECA]\d+\]/g, '').replace(/[-*]\s/g, '')
     const provider = plain.length <= 600 ? voiceProvider : 'browser'
-    speak(plain, { provider, fetchAudio: () => api.tts(plain) })
+    setVoiceErr(null)
+    speak(plain, { provider, fetchAudio: () => api.tts(plain), fallback }).then((r) => setVoiceErr(r.error || null))
   }
   return (
     <div className="msg bot">
@@ -120,6 +122,7 @@ function Message({ m, voiceProvider }) {
       </div>
       <div style={{ whiteSpace: 'pre-wrap' }}>{clean}</div>
       {m.note && <div className="small muted" style={{ marginTop: 4 }}>{m.note}</div>}
+      {voiceErr && <div className="small" style={{ marginTop: 4, color: 'var(--critical)' }}>ElevenLabs didn’t play: {voiceErr}</div>}
       {m.evidence?.length > 0 && (
         <div className="row" style={{ marginTop: 6, gap: 4 }}>
           {m.evidence.map((e) => (

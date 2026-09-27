@@ -8,9 +8,9 @@ Status as of 26 Sept 2026. Everything below is known and deliberate unless marke
 - [ ] **Decide on Best FOSS.** Enter it only with the honest statement from plan_integrations.md §1.2. Risk: a judge may treat the hosted Tiger Cloud database as proprietary core.
 - [ ] **Recheck pricing and free tiers** (Gemini, ElevenLabs, Tiger, Vultr, Auth0) on submission day; figures were checked 26 Sept 2026.
 - [ ] **Gemini:** create a key, set `GEMINI_API_KEY`, ask one question and generate one brief. Confirm `gemini-3.1-flash-lite` is still listed (2.5 Flash-Lite retires on 16 Oct 2026).
-- [ ] **ElevenLabs:** redeem the Creator code, set `ELEVENLABS_API_KEY`, play one customer update. Confirm the voice and model IDs work.
+- [ ] **ElevenLabs:** follow deploy/SETUP.md §3, run `python -m engine.voice_check` until every line is ✓, restart the server, and play one customer update (the card must say "Voice: ElevenLabs" with no red message). Set `VOICE_BROWSER_FALLBACK=true` for the demo itself.
 - [ ] **Tiger Data:** create a service, set `DATABASE_URL`, run `python -m jobs.rebuild --import`, check that `/api/signals` reports `timescale: true, host: Tiger Cloud`, then run the curl ingest example.
-- [ ] **Auth0:** create the tenant, API and SPA; add an Action for the email claim or map roles by `sub`; create an analyst demo login for judges and put it in the Devpost notes.
+- [ ] **Auth0:** follow deploy/SETUP.md §4 step by step, run `python -m api.auth_check` until every line is ✓, and create an analyst demo login for judges (put it in the Devpost notes).
 - [ ] **Vultr + domain:** create the instance, `docker compose up -d --build`, point the DNS A record, check that HTTPS works, and add the URL to Auth0.
 - [ ] Before presenting, press **Reset**. Don't run `pytest` against the live demo store (see §4).
 - [ ] Tick the Devpost boxes: UI/UX, FOSS (if decided), ElevenLabs, Gemini, Tiger Data, Auth0, Vultr, GoDaddy domain.
@@ -19,9 +19,9 @@ Status as of 26 Sept 2026. Everything below is known and deliberate unless marke
 | Integration | What's tested | What's not | Where |
 |---|---|---|---|
 | Gemini | Request shape, citation filtering, budget cap, failure fallback (all mocked) | A real `generateContent` call. That `thinkingConfig.thinkingLevel: "minimal"` is accepted (there's a retry without it on HTTP 400). Real JSON-mode output quality for briefs | engine/assistant.py |
-| ElevenLabs | Request body, caching, per-request and daily caps (mocked) | A real TTS call; whether `eleven_flash_v2_5` and voice `JBFqnCBsd6RMkjVDRZzb` are valid for the account | engine/voice.py |
+| ElevenLabs | Request body, caching, caps, error explanations (mocked); live API error parsing with a fake key; on-screen error in Chrome | A successful real TTS call with your key (run `python -m engine.voice_check --save check.mp3`) | engine/voice.py, engine/voice_check.py |
 | Tiger Cloud | Full pipeline on embedded Postgres **without** TimescaleDB | Hypertable creation on a real service; COPY import speed and TLS; per-thread connections under remote latency; the `store.info()` host check (it looks for `tsdb.cloud` in the URL) | engine/store.py, jobs/import_source.py |
-| Auth0 | Server-side JWT verification and roles with locally generated keys | The SPA login redirect, the silent token refresh, logout, and the real JWKS fetch | web/src/auth.js, api/auth.py |
+| Auth0 | Server-side JWT verification and roles with local keys; the error screen and the redirect to Auth0 in Chrome (sample tenant, fake client); `python -m api.auth_check` against a real tenant | A full successful login, refresh-token renewal and logout against your tenant | web/src/auth.js, api/auth.py, api/auth_check.py |
 | Docker / Vultr / Caddy | Nothing (no Docker on the dev machine) | Image build, entrypoint rebuild at start-up, TLS, the scheduled detector (`DETECT_INTERVAL_MINUTES`) | Dockerfile, docker-compose.yml, deploy/ |
 | Browser voice input | Button is hidden where unsupported | Microphone flow (Chrome/Edge SpeechRecognition) never exercised | web/src/speech.js |
 
@@ -46,6 +46,7 @@ Status as of 26 Sept 2026. Everything below is known and deliberate unless marke
 - [ ] The queue recomputes scores for every open case on each request (~0.25 s locally; slower over a remote DB). Cache it per request burst, or invalidate on events.
 - [ ] Postgres uses one connection per thread with no pool (psycopg_pool would add a dependency). Reconsider if Tiger latency hurts.
 - [ ] Cost caps are global per day, not per user; the assistant has no per-user rate limit. CORS is `*`.
+- [ ] Auth tokens are cached in localStorage (so refreshes don't log you out); an XSS bug could read them. Fine for the demo; revisit for production.
 - [ ] `data/tts_cache/` and the `ai_briefs` table grow without eviction (tiny at demo scale).
 - [ ] Usage "day" is UTC wall-clock, while the app's data date is fixed at 2026-09-30 (intentional, but easy to confuse).
 - [ ] Mobile/phone-width layout was checked before the assistant panel, customer-update card and four-question card were added. Re-check at 390–500 px.

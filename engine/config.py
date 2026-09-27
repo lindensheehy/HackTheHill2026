@@ -55,12 +55,16 @@ ELEVENLABS_MODEL = env("ELEVENLABS_MODEL", "eleven_flash_v2_5")
 ELEVENLABS_OUTPUT_FORMAT = env("ELEVENLABS_OUTPUT_FORMAT", "mp3_22050_32")
 ELEVENLABS_MAX_CHARS_PER_DAY = env_int("ELEVENLABS_MAX_CHARS_PER_DAY", 15000)
 ELEVENLABS_MAX_CHARS_PER_REQUEST = env_int("ELEVENLABS_MAX_CHARS_PER_REQUEST", 600)
+ELEVENLABS_API_KEY = ELEVENLABS_API_KEY.strip()
+# If ElevenLabs fails, speak with the browser's own voice instead (and say so on screen). Set false while debugging.
+VOICE_BROWSER_FALLBACK = env_bool("VOICE_BROWSER_FALLBACK", True)
 
 # Auth (optional; any OIDC provider, configured for Auth0)
 AUTH_ENABLED = env_bool("AUTH_ENABLED", False)
-AUTH_DOMAIN = env("AUTH_DOMAIN")            # e.g. northwind-triage.us.auth0.com
-AUTH_AUDIENCE = env("AUTH_AUDIENCE")        # API identifier, e.g. https://api.northwind-triage
-AUTH_CLIENT_ID = env("AUTH_CLIENT_ID")      # SPA client id (public)
+# Tolerate pasted URLs: "https://x.us.auth0.com/" -> "x.us.auth0.com" (the SDK and the issuer check both need the bare host)
+AUTH_DOMAIN = env("AUTH_DOMAIN").strip().removeprefix("https://").removeprefix("http://").rstrip("/")  # e.g. northwind-triage.us.auth0.com
+AUTH_AUDIENCE = env("AUTH_AUDIENCE").strip()  # API identifier, exactly as in Auth0 (e.g. https://api.northwind-triage)
+AUTH_CLIENT_ID = env("AUTH_CLIENT_ID").strip()  # SPA client id (public)
 AUTH_ROLES_CLAIM = env("AUTH_ROLES_CLAIM", "https://northwind-triage/roles")
 AUTH_ROLE_MAP = env("AUTH_ROLE_MAP")        # "alice@x.com:lead,bob@x.com:agent"
 AUTH_DEFAULT_ROLE = env("AUTH_DEFAULT_ROLE", "viewer")

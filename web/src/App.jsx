@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react'
 import { api } from './api.js'
-import { initAuth, login, logout } from './auth.js'
+import { initAuth, login, logout, callbackUrl } from './auth.js'
 import { Session } from './session.js'
 import Dashboard from './views/Dashboard.jsx'
 import Queue from './views/Queue.jsx'
@@ -45,32 +45,65 @@ export default function App() {
   const [boot, setBoot] = useState({ state: 'loading' })
   useEffect(() => {
     (async () => {
+      let config
       try {
-        const config = await api.config()
+        config = await api.config()
         const auth = await initAuth(config.auth)
-        if (!auth.authenticated) return setBoot({ state: 'login', config })
+        if (!auth.authenticated) return setBoot({ state: 'login', config, error: auth.error })
         const user = await api.me()
         setBoot({ state: 'ready', config, user })
       } catch (e) {
+        if (e.status === 401 && config?.auth?.enabled) {
+          // Logged in at Auth0, but our API rejected the token: almost always an audience or domain mismatch.
+          return setBoot({ state: 'login', config, error: { code: 'token_rejected', description: e.message } })
+        }
         setBoot({ state: 'error', error: e.message })
       }
     })()
   }, [])
   if (boot.state === 'loading') return <div className="spinner">Loading…</div>
   if (boot.state === 'error') return <div className="spinner">Couldn’t reach the API: {boot.error}</div>
-  if (boot.state === 'login') return <Login />
+  if (boot.state === 'login') return <Login error={boot.error} />
   return <Shell config={boot.config} user={boot.user} />
 }
 
-function Login() {
+// Plain-language hints for the Auth0 errors people actually hit while setting up.
+function hint(err) {
+  const d = `${err.code} ${err.description}`.toLowerCase()
+  if (d.includes('service not found') || d.includes('audience'))
+    return 'AUTH_AUDIENCE must equal the Identifier of your Auth0 API (Applications → APIs), character for character.'
+  if (d.includes('callback') || d.includes('redirect'))
+    return `Add ${callbackUrl()} to Allowed Callback URLs, Allowed Logout URLs and Allowed Web Origins in the Auth0 application settings.`
+  if (d.includes('unauthorized') || d.includes('unknown client') || d.includes('client'))
+    return 'Check AUTH_CLIENT_ID, and that the Auth0 application type is “Single Page Application”.'
+  if (err.code === 'token_rejected')
+    return 'Auth0 login worked, but the API refused the token. Check AUTH_AUDIENCE (API Identifier) and AUTH_DOMAIN in .env, then restart the server.'
+  if (err.code === 'access_denied')
+    return 'Access was denied: check that the user is allowed to use this application (and AUTH_AUDIENCE).'
+  return 'Run `python -m api.auth_check` on the server for a step-by-step diagnosis.'
+}
+
+function Login({ error }) {
   return (
     <main className="login">
-      <div className="card" style={{ maxWidth: 440 }}>
+      <div className="card" style={{ maxWidth: 480 }}>
         <div className="brand" style={{ marginBottom: 12 }}><div className="brand-mark">N</div><span>Northwind Triage</span></div>
         <h2>Sign in to continue</h2>
         <p className="ink2">Complaint records identify customers, so this deployment requires a login.
           Your role (viewer, agent, lead or analyst) decides what you can change.</p>
-        <button className="btn primary" onClick={login}>Sign in</button>
+        {error && (
+          <div className="callout" role="alert" style={{ borderColor: 'var(--critical)', marginBottom: 12 }}>
+            <div>
+              <b>Sign-in failed:</b> {error.code}{error.description ? `: ${error.description}` : ''}
+              <div className="small" style={{ marginTop: 6 }}>{hint(error)}</div>
+            </div>
+          </div>
+        )}
+        <button className="btn primary" onClick={login}>{error ? 'Try again' : 'Sign in'}</button>
+        <div className="small muted" style={{ marginTop: 12 }}>
+          Setting up? This page’s callback URL is <code>{callbackUrl()}</code>. It must be listed in the Auth0 application’s
+          Allowed Callback URLs, Logout URLs and Web Origins.
+        </div>
       </div>
     </main>
   )

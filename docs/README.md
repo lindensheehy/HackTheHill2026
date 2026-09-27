@@ -28,10 +28,10 @@ No LLM in any decision; every number shown has a plain-English reason. Optional 
 ## Stack / layout
 Python 3.10, pandas 2.3, FastAPI + uvicorn; optional psycopg 3, PyJWT. React 18 + Vite 5 + Recharts 2 + @xyflow/react 12 + @auth0/auth0-spa-js (plain JSX, no TS). Windows dev box.
 ```
-engine/  config, store, db, cost_model, build_baselines, router, context, queue_score(+queue_config.json), queue,
+engine/  config, store, db, cost_model, build_baselines, router, context, queue_score(+queue_config.json), queue, voice_check (CLI),
          dashboard, replay, planner, usage, assistant, voice
 jobs/    detect_alerts (also run as module), rebuild, import_source
-api/     main.py (FastAPI, serves web/dist at /), auth.py
+api/     main.py (FastAPI, serves web/dist at /), auth.py, auth_check.py (CLI: diagnose Auth0 settings)
 web/     src/{App.jsx, api.js, auth.js, session.js, speech.js, format.js, styles.css, components/, views/}
 tests/   test_router, test_queue_score, test_baselines_alerts, test_integrations (mocked services, temp store), test_postgres (embedded PG) — 40 tests
 deploy/  entrypoint.sh, Caddyfile, SETUP.md;  Dockerfile, docker-compose.yml, .env.example at root

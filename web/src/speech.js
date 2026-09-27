@@ -10,9 +10,14 @@ export function stopSpeaking() {
   current = null
 }
 
-/** fetchAudio: () => Promise<Blob> (ElevenLabs via our API). Falls back to the browser voice on any failure. */
-export async function speak(text, { provider, fetchAudio, onEnd } = {}) {
+/**
+ * Speak `text`. Returns { engine: 'elevenlabs' | 'browser' | 'none', error? }.
+ * provider 'elevenlabs' + fetchAudio (a Blob from our API) tries ElevenLabs first. If that fails, `error` says why,
+ * and the browser voice is used only when `fallback` is true (VOICE_BROWSER_FALLBACK on the server).
+ */
+export async function speak(text, { provider, fetchAudio, onEnd, fallback = true } = {}) {
   stopSpeaking()
+  let error
   if (provider === 'elevenlabs' && fetchAudio) {
     try {
       const blob = await fetchAudio()
@@ -21,19 +26,21 @@ export async function speak(text, { provider, fetchAudio, onEnd } = {}) {
       current = { audio, url }
       audio.onended = () => { URL.revokeObjectURL(url); current = null; onEnd?.() }
       await audio.play()
-      return 'elevenlabs'
+      return { engine: 'elevenlabs' }
     } catch (e) {
-      console.warn('ElevenLabs audio unavailable, using the browser voice:', e.message)
+      error = e.message || String(e)
+      console.warn('ElevenLabs audio failed:', error)
+      if (!fallback) { onEnd?.(); return { engine: 'none', error } }
     }
   }
-  if (!window.speechSynthesis) return 'none'
+  if (!window.speechSynthesis) { onEnd?.(); return { engine: 'none', error } }
   const u = new SpeechSynthesisUtterance(text)
   u.lang = 'en-GB'
   u.rate = 1
   u.onend = () => onEnd?.()
   window.speechSynthesis.speak(u)
   current = {}
-  return 'browser'
+  return { engine: 'browser', error }
 }
 
 export const canListen = () => !!(window.SpeechRecognition || window.webkitSpeechRecognition)

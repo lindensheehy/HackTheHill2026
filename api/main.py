@@ -17,7 +17,7 @@ from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from api.auth import current_user, public_config, require
+from api.auth import config_problems, current_user, public_config, require
 from engine import assistant, build_baselines, config, dashboard, db, planner, queue, replay, router, store, usage, voice
 from jobs import detect_alerts
 
@@ -29,6 +29,11 @@ READ = Depends(require("read"))
 
 @app.on_event("startup")
 def _startup():
+    problems = config_problems()
+    if problems:  # fail fast: a half-configured login only shows up later as confusing 401s or Auth0 error pages
+        bullets = "".join(f"\n  - {p}" for p in problems)
+        raise RuntimeError(f"AUTH_ENABLED=true but the auth settings are incomplete:{bullets}\n"
+                           "Fix .env (see deploy/SETUP.md) or set AUTH_ENABLED=false.")
     build_baselines.load()
     if not detect_alerts.load_alerts():
         detect_alerts.run()

@@ -46,6 +46,8 @@
 - **The older tests mutate app.db:** test_baselines_alerts calls `reset_scenario()`, which wipes simulated alerts and points from a live demo. test_integrations and test_postgres use their own temporary stores.
 - The API caches dashboard/replay per process, and baselines via `build_baselines._cache`. After `jobs.rebuild`, restart uvicorn.
 - Alert IDs are deterministic (sha1 of signal and regions) but still regenerate when the detection output changes.
+- "It's using the Windows voice": ElevenLabs is either not configured on the *running* server, or it returned an error. The UI shows which; `python -m engine.voice_check` diagnoses the key. The browser fallback is deliberate (`VOICE_BROWSER_FALLBACK`).
+- Auth0 "Oops!, something went wrong" = Auth0 rejected the /authorize request (unknown client, callback mismatch, service not found). It is not an app crash. Run `python -m api.auth_check`, and see deploy/SETUP.md §4. `.env` is read only at start-up: restart after editing it.
 - Sponsor adapters: never let one raise into core flows. Wrap calls (see `assistant.ask`) and fall back to FOSS behaviour. Gemini model IDs change often: `GEMINI_MODEL` is config, and 2.5 Flash-Lite retires on 16 Oct 2026.
 - Postgres: SQL must stay portable (`?` placeholders, no SQLite-only syntax except through `store.upsert`). Test with `tests/test_postgres.py`.
 - `/api/dashboard` takes ~3 s on a cold call (warmed at startup). Queue endpoints recompute scores per request (~0.25 s); acceptable for 1.6k rows.

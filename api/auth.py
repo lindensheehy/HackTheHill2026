@@ -95,6 +95,22 @@ def require(permission):
     return dep
 
 
+def config_problems():
+    """Settings that would make login fail. Empty list = looks sane (it can't prove the values match Auth0)."""
+    if not config.AUTH_ENABLED:
+        return []
+    probs = []
+    if not config.AUTH_DOMAIN:
+        probs.append("AUTH_DOMAIN is empty (expected like your-tenant.us.auth0.com)")
+    elif "/" in config.AUTH_DOMAIN or "." not in config.AUTH_DOMAIN:
+        probs.append(f"AUTH_DOMAIN looks wrong: {config.AUTH_DOMAIN!r} (expected a bare host like your-tenant.us.auth0.com)")
+    if not config.AUTH_CLIENT_ID:
+        probs.append("AUTH_CLIENT_ID is empty (the Client ID of the Single Page Application)")
+    if not config.AUTH_AUDIENCE:
+        probs.append("AUTH_AUDIENCE is empty (the Identifier of the Auth0 API). Without it Auth0 issues tokens the API can't verify")
+    return probs
+
+
 def public_config():
     return {"enabled": config.AUTH_ENABLED, "domain": config.AUTH_DOMAIN if config.AUTH_ENABLED else None,
             "client_id": config.AUTH_CLIENT_ID if config.AUTH_ENABLED else None,

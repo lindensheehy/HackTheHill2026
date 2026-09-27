@@ -219,3 +219,39 @@ def test_api_smoke_auth_off():
     u = c.get("/api/cases/NW-124358/customer-update").json()
     assert u["provider"] in ("browser", "elevenlabs") and "NW" not in u["text"]
     assert c.get("/api/signals").json()["feed"]["derived"]["points"] == 1722
+
+
+def test_auth_config_problems_and_domain_normalisation(monkeypatch):
+    import importlib
+    from api import auth
+    monkeypatch.setenv("AUTH_DOMAIN", " https://tenant.us.auth0.com/ ")
+    cfg = importlib.reload(config)
+    try:
+        assert cfg.AUTH_DOMAIN == "tenant.us.auth0.com"
+    finally:
+        monkeypatch.delenv("AUTH_DOMAIN")
+        importlib.reload(config)
+    monkeypatch.setattr(config, "AUTH_ENABLED", True)
+    monkeypatch.setattr(config, "AUTH_DOMAIN", "tenant.us.auth0.com")
+    monkeypatch.setattr(config, "AUTH_CLIENT_ID", "")
+    monkeypatch.setattr(config, "AUTH_AUDIENCE", "")
+    probs = auth.config_problems()
+    assert any("AUTH_CLIENT_ID" in p for p in probs) and any("AUTH_AUDIENCE" in p for p in probs)
+    monkeypatch.setattr(config, "AUTH_ENABLED", False)
+    assert auth.config_problems() == []
+
+
+def test_elevenlabs_errors_are_readable(monkeypatch):
+    body = '{"detail": {"status": "missing_permissions", "message": "The API key is missing the permission text_to_speech"}}'
+    msg = voice.explain_error(401, body)
+    assert "missing_permissions" in msg and "Text to Speech" in msg
+    assert "invalid_api_key" in voice.explain_error(401, '{"detail": {"status": "invalid_api_key", "message": "Invalid API key"}}')
+    assert "HTTP 500" in voice.explain_error(500, "not json")
+
+    monkeypatch.setattr(config, "ELEVENLABS_API_KEY", "sk_test")
+
+    def offline(req, timeout=0):
+        raise urllib.error.URLError("getaddrinfo failed")
+    monkeypatch.setattr(voice.urllib.request, "urlopen", offline)
+    with pytest.raises(RuntimeError, match="Can't reach api.elevenlabs.io"):
+        voice.request_tts("hello")
