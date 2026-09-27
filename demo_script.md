@@ -23,10 +23,13 @@ Two roles:
 **DO:** Start on **Operations** at the top. Hover over the **SLA breach rate** tile's sparkline.
 
 **SAY:**
-> "Meet Northwind. Two years ago they closed complaints in about nine days. Today it's thirty-eight. Their SLA breach rate
-> has gone from 44% to over 90%, the regulator score has fallen from 4.3 to 2.6, and they're now looking at
-> **£2.4 million a quarter** in penalty exposure.
-> The good news: when we dug into the data, one fixable cause stood out, and we built something to fix it."
+> "Let's talk about Northwind. 
+
+> Two years ago they closed complaints in about 9 days. Today it's **38**. 
+
+> Their SLA breach rate has gone from 44% to **over 90%**, the regulator score has fallen from 4.3 to **2.6**, and they're now looking at **£2.4 million a quarter** in penalty exposure.
+
+> Here's the good news: we dug into the data, one clear cause stood out, and we built something to fix it."
 
 **DO:** Scroll down to **"Two years of degradation"** so the breach chart and the transfer panel are both visible.
 
@@ -37,10 +40,14 @@ Two roles:
 **DO:** Point the cursor at the orange bars in **The transfer penalty**, then at **Transfer rate by entry system**.
 
 **SAY:**
-> "Complaints that get bounced between systems take **15 days longer**, cost **£121 instead of £68**, and are **three times
-> more likely to reopen**. Every single one of the slowest 1% was a transfer.
-> And here's the part we love: whether a complaint gets transferred has nothing to do with what it's about. It depends only on
-> **where it comes in**. Outside the case system it's about 46%, whatever the category, channel or region.
+> "Complaints that get bounced between systems take **15 days longer**, cost **£121 instead of £68**, and are **three times more likely to reopen**. 
+
+> Of the slowest 1%, **every single one** was a transfer.
+
+> And here's the part we love: whether a complaint gets transferred has nothing to do with what it's about. It depends only on **where it comes in**. 
+
+> Outside the "case system" it's about 46%, whatever the category, channel or region.
+
 > That makes it a routing problem, and routing problems are solvable."
 
 ---
@@ -50,21 +57,24 @@ Two roles:
 **DO:** Click the **Intake** tab → click the prepared example **"Barrowdale estimated read"**.
 
 **SAY:**
-> "This is what an agent sees when a complaint arrives. The router decides the owner **once, at intake**. The case is
-> created in CaseTrack, and it goes straight to Billing Resolution."
+> "This is what an agent sees when a complaint arrives. 
+
+> The router decides the owner **once, at intake**. The case is created in CaseTrack, and it goes straight to Billing Resolution."
 
 **DO:** Point to the **Legacy vs Not transferred** table, then to the **Why** list.
 
 **SAY:**
-> "Next to it you can see how complaints like this one went historically when they bounced, versus when they didn't: about
-> five days faster and cheaper. And every number comes with a plain-English reason. No black box: routing and
-> prioritisation are explainable rules."
+> "Next to it you can see how complaints like this one went historically when they bounced, versus when they didn't. **About five days faster and cheaper**. 
+
+> And every number comes with a plain-English reason. No black box. Routing and prioritisation are explainable rules."
 
 **DO:** Click **Replay** → press **▶ Play** (it runs for ~6 seconds).
 
 **SAY (while it runs):**
-> "Here we replay the last six months of real complaints through the router. Even with conservative assumptions, 80%
-> adoption and 60% of transfers avoided, that's around **£120k a year**, **35,000 complaint-days** and **almost 500 reopens** saved.
+> "Here we replay the last six months of real complaints through the router. 
+
+> Even with conservative assumptions, 80% adoption and 60% of transfers avoided, that's around **£120k a year**, **35,000 complaint-days** and **almost 500 reopens** saved.
+
 > Those two sliders are the assumptions, and we label them that way on screen."
 
 ---
@@ -108,9 +118,7 @@ Two roles:
 **DO:** Point to the top alert and the spike chart, then scroll down to the **Investigation brief** → click **Generate brief (Gemini)**.
 
 **SAY:**
-> "…it groups Barrowdale and Dunmoor together and names the two systems they share. With **Gemini**, it drafts a short brief:
-> what changed, possible explanations and what to check next. Every bullet cites the evidence it's built on, and the AI explains;
-> it never decides. The whole feed lives in **Tiger Data**, so live readings flow in and get checked automatically."
+> "…it groups Barrowdale and Dunmoor together and names the two systems they share. With **Gemini**, it drafts a short brief. **what changed, possible explanations and what to check next**."
 
 **DO:** Scroll to **Linked open complaints** and click the first one: it opens in the queue with the alert attached.
 
@@ -128,9 +136,10 @@ Two roles:
 **DO:** Close the assistant. Scroll **Operations** down to **Where the money is**.
 
 **SAY:**
-> "Two more wins sit in the same data. A quarter of complaints only need information, and answering those works just as well, so
-> auto-answering them is worth about **£100k a year**. And smart meters: the numbers say don't buy them everywhere, buy them in
-> **Barrowdale and Dunmoor**, where estimated reads run at over 60%."
+> "Two more wins sit in the same data. A quarter of complaints only need information, so
+> auto-answering them is worth about **£100k a year**. 
+
+> And smart meters: the numbers say don't buy them everywhere, buy them in **Barrowdale and Dunmoor**, where estimated reads are almost **3 times** as bad as the other regions. A full rollout of smart meters would be expensive - around 77 million - so we are proposing a staged rollout. the interactable figure here shows how the numbers can play out."
 
 ---
 
